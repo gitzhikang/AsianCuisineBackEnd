@@ -1,0 +1,25 @@
+server:
+  port: 8080
+spring:
+  #config env: dev/prod
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  application:
+    name: hmdp
+  datasource:
+    driver-class-name: ${ac.spring.datasource.driver-class-name}
+    url: ${ac.spring.datasource.url}
+    username: ${ac.spring.datasource.username}
+    password: ${ac.spring.datasource.password}
+  jackson:
+    default-property-inclusion: non_null # JSON处理时忽略非空字段
+
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+logging:
+  level:
+    com.asiancuisine.asiancuisine: debug

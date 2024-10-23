@@ -5,7 +5,7 @@ stages:
 
 variables:
   APP_NAME: "AsianCuisine-0.0.1-SNAPSHOT.jar"
-  DEPLOY_PATH: "/home/deployer/apps/AsianCuisine"
+  DEPLOY_PATH: "/home/gitlab-runner/apps/AsianCuisine"
 
 before_script:
   - java -version

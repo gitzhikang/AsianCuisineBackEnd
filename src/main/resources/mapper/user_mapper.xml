@@ -12,16 +12,17 @@
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
-    <select id="queryAwardList" resultMap="dataMap">
-        select award_id, award_key, award_config, award_desc
-        from award
-                 limit 10
-    </select>
-<!--    自动映射-->
-    <select id="queryById" resultType="com.asiancuisine.asiancuisine.entity.User">
+    <select id="queryById" resultMap="dataMap">
         select id, phone, password, nickName,icon,createTime,updateTime
         from award
         where id = #{id}
     </select>
+
+<!--    自动映射  参考-->
+<!--    <select id="queryById" resultType="com.asiancuisine.asiancuisine.entity.User">-->
+<!--        select id, phone, password, nickName,icon,createTime,updateTime-->
+<!--        from award-->
+<!--        where id = #{id}-->
+<!--    </select>-->
 
 </mapper>

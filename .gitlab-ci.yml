@@ -8,10 +8,8 @@ variables:
   DEPLOY_PATH: "/home/deployer/apps/AsianCuisine"
 
 before_script:
-  - apt-get update -qq
-  - apt-get install -qqy openjdk-8-jdk maven sshpass
-  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64  # 根据您的 Java 版本和安装路径调整
-  - export PATH=$JAVA_HOME/bin:$PATH
+  - java -version
+  - mvn -version
   - echo "Java and maven environment is ready"
 
 build:

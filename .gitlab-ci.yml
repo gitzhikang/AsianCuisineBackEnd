@@ -1,0 +1,35 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  APP_NAME: "AsianCuisine-0.0.1-SNAPSHOT.jar"
+  DEPLOY_PATH: "/home/gitlab-runner/apps/AsianCuisine"
+
+before_script:
+  - java -version
+  - mvn -version
+  - echo "Java and maven environment is ready"
+
+build:
+  stage: build
+  script:
+    - mvn clean package
+  artifacts:
+    paths:
+      - target/*.jar
+    expire_in: 1 week
+
+test:
+  stage: test
+  script:
+    - mvn test
+
+deploy:
+  stage: deploy
+  script:
+    - mkdir -p $DEPLOY_PATH
+    - cp target/$APP_NAME $DEPLOY_PATH/
+    - pkill -f $APP_NAME || true
+    - nohup java -jar $DEPLOY_PATH/$APP_NAME > $DEPLOY_PATH/app.log 2>&1 &

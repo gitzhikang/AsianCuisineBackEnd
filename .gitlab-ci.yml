@@ -32,4 +32,4 @@ deploy:
     - mkdir -p $DEPLOY_PATH
     - cp target/$APP_NAME $DEPLOY_PATH/
     - pkill -f $APP_NAME || true
-    - nohup java -jar $DEPLOY_PATH/$APP_NAME > $DEPLOY_PATH/app.log 2>&1 &
+    - nohup java -jar $DEPLOY_PATH/$APP_NAME --spring.profiles.active=prod > $DEPLOY_PATH/app.log 2>&1 &

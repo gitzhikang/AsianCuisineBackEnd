@@ -13,7 +13,7 @@
     </resultMap>
 
     <select id="queryById" resultMap="dataMap">
-        select id, phone, password, nickName,createTime,updateTime
+        select id, phone, password, nick_name,create_time,update_time
         from user
         where id = #{id}
     </select>

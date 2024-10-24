@@ -26,6 +26,7 @@ public class UserController {
         return userService.queryById(id);
     }
 
+    @ApiOperation("Add User Info")
     @PostMapping("/adduser")
     public String addUser(@RequestBody User user) {
         int result = userService.addUser(user);

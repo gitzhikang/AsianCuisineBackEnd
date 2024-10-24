@@ -1,5 +1,6 @@
 package com.asiancuisine.asiancuisine.config;
 
+import org.apache.ibatis.jdbc.Null;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -35,10 +36,9 @@ public class SSHTunnelManager {
         try {
 
             JSch jsch = new JSch();
-            jsch.setKnownHosts(new FileInputStream("/Users/songzhikang/.ssh/known_hosts"));
             // 设置 SSH 连接的用户名、主机地址、端口
             session = jsch.getSession("lz238", sshHost,22);
-
+            session.setConfig("StrictHostKeyChecking", "no");
             if (passphrase != null && !passphrase.isEmpty()) {
                 jsch.addIdentity(privateKeyPath, passphrase);  // 如果私钥有密码
             } else {

@@ -3,7 +3,7 @@ server:
 spring:
   #config env: dev/prod
   profiles:
-    active: dev
+    active: prod
   main:
     allow-circular-references: true
   application:

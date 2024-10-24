@@ -1,5 +1,6 @@
 package com.asiancuisine.asiancuisine.entity;
 
+import com.asiancuisine.asiancuisine.enums.Sex;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -15,39 +16,52 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * 主键
+     * primary key
      */
     private Long id;
 
     /**
-     * 手机号码
+     * email address
      */
-    private String phone;
+    private String emailAddress;
 
     /**
-     * 密码，加密存储
+     * password hashed
      */
     private String password;
 
     /**
-     * 昵称，默认是随机字符
+     * first name
+     */
+    private String firstName;
+
+    /**
+     * last name
+     */
+    private String lastName;
+
+    /**
+     * sex
+     */
+    private int sex;
+
+    /**
+     * nickname
      */
     private String nickName;
 
     /**
-     * 用户头像
+     * user icon
      */
     private String icon = "";
 
     /**
-     * 创建时间
+     * create time
      */
     private LocalDateTime createTime;
 
     /**
-     * 更新时间
+     * update time
      */
     private LocalDateTime updateTime;
-
-
 }

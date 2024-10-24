@@ -5,20 +5,28 @@
     <resultMap id="dataMap" type="com.asiancuisine.asiancuisine.entity.User">
         <id column="id" property="id"/>
         <result column="id" property="id"/>
-        <result column="phone" property="phone"/>
+        <result column="email_address" property="emailAddress"/>
         <result column="password" property="password"/>
+        <result column="first_name" property="first_name"/>
+        <result column="last_name" property="last_name" />
+        <result column="sex" property="sex" />
         <result column="nick_name" property="nickName"/>
+        <result column="icon" property="icon" />
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="queryById" resultMap="dataMap">
-        select id, phone, password, nick_name,create_time,update_time
+        select id, email_address, password, first_name, last_name, sex, nick_name, icon, create_time, update_time
         from user
         where id = #{id}
     </select>
 
-<!--    自动映射  参考-->
+    <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user (email_address, password, first_name, last_name, sex, nick_name, icon, create_time, update_time)
+        VALUES (#{emailAddress}, #{password}, #{firstName}, #{lastName}, #{sex}, #{nickName}, #{icon}, #{createTime}, #{updateTime})
+    </insert>
+
 <!--    <select id="queryById" resultType="com.asiancuisine.asiancuisine.entity.User">-->
 <!--        select id, phone, password, nickName,icon,createTime,updateTime-->
 <!--        from user-->

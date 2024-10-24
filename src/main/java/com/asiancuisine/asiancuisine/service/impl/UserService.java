@@ -18,4 +18,7 @@ public class UserService implements IUserService {
     public User queryById(Long id) {
         return userMapper.queryById(id);
     }
+
+    @Override
+    public int addUser(User user) { return userMapper.addUser(user); }
 }

@@ -8,10 +8,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Api("User API")
 @Slf4j
@@ -27,5 +24,15 @@ public class UserController {
     public User findById(
             @ApiParam(value = "user ID",required = true,example = "1") @PathVariable Long id) {
         return userService.queryById(id);
+    }
+
+    @PostMapping("/adduser")
+    public String addUser(@RequestBody User user) {
+        int result = userService.addUser(user);
+        if (result > 0) {
+            return "add user success";
+        } else {
+            return "add user failed";
+        }
     }
 }

@@ -31,7 +31,8 @@ deploy:
   script:
     - mkdir -p $DEPLOY_PATH
     - cp target/$APP_NAME $DEPLOY_PATH/
-    - while pgrep -f "$APP_NAME" > /dev/null; do
+    - |
+      while pgrep -f "$APP_NAME" > /dev/null; do
         pkill -f "$APP_NAME"
         sleep 1
       done

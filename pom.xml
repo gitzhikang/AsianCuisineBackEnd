@@ -75,6 +75,15 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/**</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
@@ -90,5 +99,43 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- 开发环境 profile -->
+        <profile>
+            <id>dev</id>
+            <properties>
+                <!-- 开发环境专用属性 -->
+                <env>dev</env>
+            </properties>
+            <build>
+                <resources>
+                    <!-- 开发环境资源 -->
+                    <resource>
+                        <directory>src/main/resources/application-dev.yaml</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+
+        <!-- 生产环境 profile -->
+        <profile>
+            <id>prod</id>
+            <properties>
+                <!-- 生产环境专用属性 -->
+                <env>prod</env>
+            </properties>
+            <build>
+                <resources>
+                    <!-- 生产环境资源 -->
+                    <resource>
+                        <directory>src/main/resources/application-prod.yaml</directory>
+                        <filtering>true</filtering>
+                    </resource>
+                </resources>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

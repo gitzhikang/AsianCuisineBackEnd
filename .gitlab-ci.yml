@@ -31,5 +31,8 @@ deploy:
   script:
     - mkdir -p $DEPLOY_PATH
     - cp target/$APP_NAME $DEPLOY_PATH/
-    - pkill -f $APP_NAME || true
+    - while pgrep -f "$APP_NAME" > /dev/null; do
+        pkill -f "$APP_NAME"
+        sleep 1
+      done
     - nohup java -jar $DEPLOY_PATH/$APP_NAME --spring.profiles.active=prod > $DEPLOY_PATH/app.log 2>&1 &

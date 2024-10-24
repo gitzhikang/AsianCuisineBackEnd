@@ -43,7 +43,7 @@ public class User implements Serializable {
     /**
      * sex
      */
-    private int sex;
+    private Sex sex;
 
     /**
      * nickname

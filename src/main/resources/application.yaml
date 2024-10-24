@@ -28,3 +28,10 @@ ssh:
   host: ${ac.ssh.host}
   privateKeyPath: ${ac.ssh.privateKeyPath}
   passphrase: ${ac.ssh.passphrase}
+
+aws:
+  s3:
+    accessKey: ${ac.aws.s3.accessKey}
+    secretKey: ${ac.aws.s3.secretKey}
+    region: ${ac.aws.s3.region}
+    bucketName: ${ac.aws.s3.bucketName}

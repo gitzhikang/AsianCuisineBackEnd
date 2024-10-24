@@ -76,6 +76,21 @@
             <artifactId>knife4j-spring-boot-starter</artifactId>
             <version>3.0.2</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.11.336</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-core</artifactId>
+            <version>1.11.336</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-kms</artifactId>
+            <version>1.11.336</version>
+        </dependency>
 
     </dependencies>
 

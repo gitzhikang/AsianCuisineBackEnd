@@ -7,7 +7,7 @@ spring:
   main:
     allow-circular-references: true
   application:
-    name: hmdp
+    name: AsianCuisine
   datasource:
     driver-class-name: ${ac.spring.datasource.driver-class-name}
     url: ${ac.spring.datasource.url}
@@ -23,3 +23,8 @@ mybatis:
 logging:
   level:
     com.asiancuisine.asiancuisine: debug
+
+ssh:
+  host: ${ac.ssh.host}
+  privateKeyPath: ${ac.ssh.privateKeyPath}
+  passphrase: ${ac.ssh.passphrase}

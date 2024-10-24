@@ -14,14 +14,14 @@
 
     <select id="queryById" resultMap="dataMap">
         select id, phone, password, nickName,icon,createTime,updateTime
-        from award
+        from user
         where id = #{id}
     </select>
 
 <!--    自动映射  参考-->
 <!--    <select id="queryById" resultType="com.asiancuisine.asiancuisine.entity.User">-->
 <!--        select id, phone, password, nickName,icon,createTime,updateTime-->
-<!--        from award-->
+<!--        from user-->
 <!--        where id = #{id}-->
 <!--    </select>-->
 

@@ -26,8 +26,8 @@ public class SSHTunnelManager {
     @Value("${ac.ssh.privateKeyPath}")
     private String privateKeyPath;  // 私钥文件路径
 
-    @Value("${ac.ssh.passphrase}")
-    private String passphrase;  // 私钥密码（如果有）
+//    @Value("${ac.ssh.passphrase}")
+    private String passphrase = null;  // 私钥密码（如果有）
 
     private final int SESSION_TIMEOUT = 1000000;
 

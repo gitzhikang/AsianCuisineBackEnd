@@ -3,8 +3,11 @@
         PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-config.dtd">
 <configuration>
+    <settings>
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+    </settings>
     <typeHandlers>
-        <typeHandler handler="com.asiancuisine.asiancuisine.enums.SexTypeHandler"/>
+        <typeHandler javaType="com.asiancuisine.asiancuisine.enums.Sex" handler="com.asiancuisine.asiancuisine.enums.SexTypeHandler"/>
     </typeHandlers>
 </configuration>
 

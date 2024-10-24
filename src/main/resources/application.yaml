@@ -3,7 +3,7 @@ server:
 spring:
   #config env: dev/prod
   profiles:
-    active: prod
+    active: dev
   main:
     allow-circular-references: true
   application:
@@ -19,8 +19,6 @@ spring:
 mybatis:
   mapper-locations: classpath:/mapper/*.xml
   type-aliases-package: com.asiancuisine.asiancuisine.entity
-  configuration:
-    map-underscore-to-camel-case: true
   config-location: classpath:/mybatis/mybatis-config.xml
 logging:
   level:

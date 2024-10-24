@@ -7,8 +7,8 @@
         <result column="id" property="id"/>
         <result column="email_address" property="emailAddress"/>
         <result column="password" property="password"/>
-        <result column="first_name" property="first_name"/>
-        <result column="last_name" property="last_name" />
+        <result column="first_name" property="firstName"/>
+        <result column="last_name" property="lastName" />
         <result column="sex" property="sex" typeHandler="com.asiancuisine.asiancuisine.enums.SexTypeHandler" />
         <result column="nick_name" property="nickName"/>
         <result column="icon" property="icon" />

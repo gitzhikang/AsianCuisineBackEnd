@@ -35,3 +35,10 @@ aws:
     secretKey: ${ac.aws.s3.secretKey}
     region: ${ac.aws.s3.region}
     bucketName: ${ac.aws.s3.bucketName}
+
+jwt:
+  user-secret-key: asiancuisine
+  # expire time
+  user-ttl: 7200000
+  # Set token name from frontend (in http header)
+  user-token-name: token

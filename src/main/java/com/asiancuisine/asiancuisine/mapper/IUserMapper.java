@@ -5,6 +5,6 @@ import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
 public interface IUserMapper {
-    public User queryById(Long id);
-    public int addUser(User user);
+    User queryByEmailAddress(String emailAddress);
+    int addUser(User user);
 }

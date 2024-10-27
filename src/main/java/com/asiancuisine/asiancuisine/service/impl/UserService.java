@@ -15,8 +15,8 @@ public class UserService implements IUserService {
     private IUserMapper userMapper;
 
     @Override
-    public User queryById(Long id) {
-        return userMapper.queryById(id);
+    public User queryByEmailAddress(String emailAddress) {
+        return userMapper.queryByEmailAddress(emailAddress);
     }
 
     @Override

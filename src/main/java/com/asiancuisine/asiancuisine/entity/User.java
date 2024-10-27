@@ -48,7 +48,7 @@ public class User implements Serializable {
     /**
      * nickname
      */
-    private String nickName;
+    private String nickName = "";
 
     /**
      * user icon

@@ -22,6 +22,12 @@
         where email_address = #{emailAddress}
     </select>
 
+    <select id="queryPasswordByEmailAddress" resultType="java.lang.String">
+        select password
+        from user
+        where email_address = #{emailAddress}
+    </select>
+
     <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO user (email_address, password, first_name, last_name, sex, nick_name, icon, create_time, update_time)
         VALUES (#{emailAddress}, #{password}, #{firstName}, #{lastName}, #{sex}, #{nickName}, #{icon}, NOW(), NOW())

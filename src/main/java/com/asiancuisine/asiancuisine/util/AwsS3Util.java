@@ -28,7 +28,7 @@ public class AwsS3Util {
         String originalFileName = file.getOriginalFilename();
         String extensionName = originalFileName.substring(originalFileName.lastIndexOf('.'));
         String keyName = UUID.randomUUID().toString()+extensionName;
-        //设置contenttype
+        //ContentType
         ObjectMetadata metadata = new ObjectMetadata();
         if(extensionName.contains("PNG") || extensionName.contains("png")){
             metadata.setContentType("image/png");

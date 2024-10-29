@@ -11,9 +11,6 @@ import javax.annotation.PreDestroy;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.JSch;
 
-import java.io.FileInputStream;
-import java.util.Properties;
-
 @Component
 @Profile("dev")
 public class SSHTunnelManager {
@@ -24,10 +21,7 @@ public class SSHTunnelManager {
     public String sshHost;
 
     @Value("${ac.ssh.privateKeyPath}")
-    private String privateKeyPath;  // 私钥文件路径
-
-//    @Value("${ac.ssh.passphrase}")
-    private String passphrase = null;  // 私钥密码（如果有）
+    private String privateKeyPath;
 
     private final int SESSION_TIMEOUT = 1000000;
 
@@ -36,19 +30,14 @@ public class SSHTunnelManager {
         try {
 
             JSch jsch = new JSch();
-            // 设置 SSH 连接的用户名、主机地址、端口
+            // config SSH uername、host、port
             session = jsch.getSession("lz238", sshHost,22);
             session.setConfig("StrictHostKeyChecking", "no");
-            if (passphrase != null && !passphrase.isEmpty()) {
-                jsch.addIdentity(privateKeyPath, passphrase);  // 如果私钥有密码
-            } else {
-                jsch.addIdentity(privateKeyPath);  // 无密码私钥
-            }
+            jsch.addIdentity(privateKeyPath);
 
-            // 建立 SSH 连接
+            // build connection
             session.connect(SESSION_TIMEOUT);
-
-            // 将本地端口 localPort 映射到远程服务器的 remoteHost:remotePort
+            // map localhost:3307 to remoteHost:3306
             session.setPortForwardingL(3307, "localhost", 3306);
 
             System.out.println("SSH Tunnel established from localhost:3307 to localhost:3306");

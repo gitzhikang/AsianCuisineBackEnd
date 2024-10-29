@@ -21,4 +21,9 @@ public class UserService implements IUserService {
 
     @Override
     public int addUser(User user) { return userMapper.addUser(user); }
+
+    @Override
+    public String queryPasswordByEmailAddress(String emailAddress) {
+        return userMapper.queryPasswordByEmailAddress(emailAddress);
+    }
 }

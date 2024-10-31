@@ -42,7 +42,9 @@ aws:
 
 jwt:
   user-secret-key: asiancuisine
-  # expire time
-  user-ttl: 7200000
+  # expire time for remembered
+  user-ttl-remembered: 604800000
+  # expire time for not remembered
+  user-ttl-not-remembered: 86400000
   # Set token name from frontend (in http header)
-  user-token-name: token
+  user-token-name: Authorization

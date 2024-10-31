@@ -32,8 +32,11 @@ public class UserController {
     @Value("${jwt.user-secret-key}")
     private String userSecretKey;
 
-    @Value("${jwt.user-ttl}")
-    private long userTtl;
+    @Value("${jwt.user-ttl-remembered}")
+    private long userTtlRemembered;
+
+    @Value("${jwt.user-ttl-not-remembered}")
+    private long userTtlNotRemembered;
 
     @ApiOperation("Get User Info by Email Address")
     @GetMapping("/{emailAddress}")
@@ -60,24 +63,24 @@ public class UserController {
 
     @ApiOperation("Login")
     @PostMapping("/login")
-    public ResponseEntity<Result<String>> login(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<Result<?>> login(@RequestBody Map<String, String> loginRequest) {
         String emailAddress = loginRequest.get("emailAddress");
         String password = loginRequest.get("password");
         String isRemember = loginRequest.get("isRemembered");
 
         String dbPassword = userService.queryPasswordByEmailAddress(emailAddress);
         if (dbPassword != null && dbPassword.equals(password)) {
+            Map<String, Object> claims = new HashMap<>();
+            claims.put(JwtClaimsKeyConstant.EMAIL_ADDRESS, emailAddress);
+            String jwtToken;
             if (isRemember.equals("true")) {
-                Map<String, Object> claims = new HashMap<>();
-                claims.put(JwtClaimsKeyConstant.EMAIL_ADDRESS, emailAddress);
-                String jwtToken = JwtUtil.createJWT(userSecretKey, userTtl, claims);
-                HttpHeaders headers = new HttpHeaders();
-                headers.set("Authorization", "Bearer " + jwtToken);
-
-                return new ResponseEntity<>(Result.success(), headers, HttpStatus.OK);
+                jwtToken = JwtUtil.createJWT(userSecretKey, userTtlRemembered, claims);
             } else {
-                return new ResponseEntity<>(Result.success(), HttpStatus.OK);
+                jwtToken = JwtUtil.createJWT(userSecretKey, userTtlNotRemembered, claims);
             }
+            HashMap<String, String> tokenClaims = new HashMap<>();
+            tokenClaims.put("token", jwtToken);
+            return new ResponseEntity<>(Result.success(tokenClaims), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(Result.error("login failed, password is wrong"), HttpStatus.BAD_REQUEST);
         }

@@ -70,7 +70,9 @@ public class UserController {
 
         String dbPassword = userService.queryPasswordByEmailAddress(emailAddress);
         if (dbPassword != null && dbPassword.equals(password)) {
+            Long userId = userService.queryIdByEmailAddress(emailAddress);
             Map<String, Object> claims = new HashMap<>();
+            claims.put(JwtClaimsKeyConstant.USER_ID, userId);
             claims.put(JwtClaimsKeyConstant.EMAIL_ADDRESS, emailAddress);
             String jwtToken;
             if (isRemember.equals("true")) {

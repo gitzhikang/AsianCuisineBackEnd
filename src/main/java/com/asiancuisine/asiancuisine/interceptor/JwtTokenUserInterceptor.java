@@ -20,11 +20,11 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 public class JwtTokenUserInterceptor implements HandlerInterceptor {
 
-    @Value("jwt.user-secret-key")
+    @Value("${jwt.user-secret-key}")
     private String userSecretKey;
 
 
-    @Value("jwt.user-token-name")
+    @Value("${jwt.user-token-name}")
     private String userTokenName;
 
     /**
@@ -46,9 +46,18 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
         }
 
         // 1. receive token from the request header
-        String token = request.getHeader(userTokenName);
+        String authorizationHeader = request.getHeader(userTokenName);
 
-        // 2. authenticate the token
+        // 2. if token is missing or does not start with "Bearer ", return 401
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            response.setStatus(401);
+            return false;
+        }
+
+        // extract the token
+        String token = authorizationHeader.substring(7);
+
+        // 3. authenticate the token
         try {
             log.info("jwt verification:{}", token);
             Claims claims = JwtUtil.parseJWT(userSecretKey, token);

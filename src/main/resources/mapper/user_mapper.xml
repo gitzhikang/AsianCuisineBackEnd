@@ -21,6 +21,12 @@
         where email_address = #{emailAddress}
     </select>
 
+    <select id="queryIdByEmailAddress" resultType="java.lang.Long">
+        select id
+        from user
+        where email_address = #{emailAddress}
+    </select>
+
     <select id="queryPasswordByEmailAddress" resultType="java.lang.String">
         select password
         from user

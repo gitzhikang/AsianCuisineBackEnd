@@ -26,4 +26,9 @@ public class UserService implements IUserService {
     public String queryPasswordByEmailAddress(String emailAddress) {
         return userMapper.queryPasswordByEmailAddress(emailAddress);
     }
+
+    @Override
+    public Long queryIdByEmailAddress(String emailAddress) {
+        return userMapper.queryIdByEmailAddress(emailAddress);
+    }
 }

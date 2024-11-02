@@ -70,9 +70,9 @@ public class UserController {
 
         String dbPassword = userService.queryPasswordByEmailAddress(emailAddress);
         if (dbPassword != null && dbPassword.equals(password)) {
-            Long userId = userService.queryIdByEmailAddress(emailAddress);
+            User currentUser = userService.queryByEmailAddress(emailAddress);
             Map<String, Object> claims = new HashMap<>();
-            claims.put(JwtClaimsKeyConstant.USER_ID, userId);
+            claims.put(JwtClaimsKeyConstant.USER_ID, currentUser.getId());
             claims.put(JwtClaimsKeyConstant.EMAIL_ADDRESS, emailAddress);
             String jwtToken;
             if (isRemember.equals("true")) {
@@ -80,9 +80,11 @@ public class UserController {
             } else {
                 jwtToken = JwtUtil.createJWT(userSecretKey, userTtlNotRemembered, claims);
             }
-            HashMap<String, String> tokenClaims = new HashMap<>();
-            tokenClaims.put("token", jwtToken);
-            return new ResponseEntity<>(Result.success(tokenClaims), HttpStatus.OK);
+
+            Map<String, Object> responses = new HashMap<>();
+            responses.put("current_user", currentUser);
+            responses.put("token", jwtToken);
+            return new ResponseEntity<>(Result.success(responses), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(Result.error("login failed, password is wrong"), HttpStatus.BAD_REQUEST);
         }

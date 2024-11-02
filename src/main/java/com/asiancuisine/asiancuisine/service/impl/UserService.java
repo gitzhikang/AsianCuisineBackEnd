@@ -31,4 +31,9 @@ public class UserService implements IUserService {
     public Long queryIdByEmailAddress(String emailAddress) {
         return userMapper.queryIdByEmailAddress(emailAddress);
     }
+
+    @Override
+    public void updateNickName(Long id, String nickName) {
+        userMapper.updateNickName(id, nickName);
+    }
 }

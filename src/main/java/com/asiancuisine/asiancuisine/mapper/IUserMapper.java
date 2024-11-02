@@ -9,4 +9,5 @@ public interface IUserMapper {
     int addUser(User user);
     String queryPasswordByEmailAddress(String emailAddress);
     Long queryIdByEmailAddress(String emailAddress);
+    void updateNickName(Long userId, String nickName);
 }

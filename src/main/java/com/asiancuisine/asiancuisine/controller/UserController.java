@@ -11,7 +11,8 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,10 +54,19 @@ public class UserController {
     @ApiOperation("Add User Info")
     @PostMapping("/adduser")
     public ResponseEntity<Result<String>> addUser(@RequestBody User user) {
-        int result = userService.addUser(user);
-        if (result > 0) {
-            return new ResponseEntity<>(Result.success(), HttpStatus.OK);
-        } else {
+        try {
+            int result = userService.addUser(user);
+            Long id = userService.queryIdByEmailAddress(user.getEmailAddress());
+            userService.updateNickName(id, "Jobless User #" + String.format("%04d", id));
+
+            if (result > 0) {
+                return new ResponseEntity<>(Result.success(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(Result.error("register user failed, please retry!"), HttpStatus.BAD_REQUEST);
+            }
+        } catch (DuplicateKeyException e) {
+            return new ResponseEntity<>(Result.error("email address already exists"), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
             return new ResponseEntity<>(Result.error("register user failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }
@@ -70,9 +80,9 @@ public class UserController {
 
         String dbPassword = userService.queryPasswordByEmailAddress(emailAddress);
         if (dbPassword != null && dbPassword.equals(password)) {
-            Long userId = userService.queryIdByEmailAddress(emailAddress);
+            User currentUser = userService.queryByEmailAddress(emailAddress);
             Map<String, Object> claims = new HashMap<>();
-            claims.put(JwtClaimsKeyConstant.USER_ID, userId);
+            claims.put(JwtClaimsKeyConstant.USER_ID, currentUser.getId());
             claims.put(JwtClaimsKeyConstant.EMAIL_ADDRESS, emailAddress);
             String jwtToken;
             if (isRemember.equals("true")) {
@@ -80,9 +90,11 @@ public class UserController {
             } else {
                 jwtToken = JwtUtil.createJWT(userSecretKey, userTtlNotRemembered, claims);
             }
-            HashMap<String, String> tokenClaims = new HashMap<>();
-            tokenClaims.put("token", jwtToken);
-            return new ResponseEntity<>(Result.success(tokenClaims), HttpStatus.OK);
+
+            Map<String, Object> responses = new HashMap<>();
+            responses.put("current_user", currentUser);
+            responses.put("token", jwtToken);
+            return new ResponseEntity<>(Result.success(responses), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(Result.error("login failed, password is wrong"), HttpStatus.BAD_REQUEST);
         }

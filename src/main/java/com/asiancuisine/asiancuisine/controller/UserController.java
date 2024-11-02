@@ -11,14 +11,14 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @Api(tags = "User Api")
 @Slf4j
@@ -54,14 +54,19 @@ public class UserController {
     @ApiOperation("Add User Info")
     @PostMapping("/adduser")
     public ResponseEntity<Result<String>> addUser(@RequestBody User user) {
-        int result = userService.addUser(user);
-        log.info(user.toString());
-        Long id = userService.queryIdByEmailAddress(user.getEmailAddress());
-        userService.updateNickName(id, "Jobless User #" + String.format("%04d", id));
+        try {
+            int result = userService.addUser(user);
+            Long id = userService.queryIdByEmailAddress(user.getEmailAddress());
+            userService.updateNickName(id, "Jobless User #" + String.format("%04d", id));
 
-        if (result > 0) {
-            return new ResponseEntity<>(Result.success(), HttpStatus.OK);
-        } else {
+            if (result > 0) {
+                return new ResponseEntity<>(Result.success(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(Result.error("register user failed, please retry!"), HttpStatus.BAD_REQUEST);
+            }
+        } catch (DuplicateKeyException e) {
+            return new ResponseEntity<>(Result.error("email address already exists"), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
             return new ResponseEntity<>(Result.error("register user failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }

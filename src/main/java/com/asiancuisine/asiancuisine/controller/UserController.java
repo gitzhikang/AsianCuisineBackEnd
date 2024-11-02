@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @Api(tags = "User Api")
 @Slf4j
@@ -54,6 +55,10 @@ public class UserController {
     @PostMapping("/adduser")
     public ResponseEntity<Result<String>> addUser(@RequestBody User user) {
         int result = userService.addUser(user);
+        log.info(user.toString());
+        Long id = userService.queryIdByEmailAddress(user.getEmailAddress());
+        userService.updateNickName(id, "Jobless User #" + String.format("%04d", id));
+
         if (result > 0) {
             return new ResponseEntity<>(Result.success(), HttpStatus.OK);
         } else {

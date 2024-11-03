@@ -11,12 +11,13 @@
         <result column="sex" property="sex" typeHandler="com.asiancuisine.asiancuisine.enums.SexTypeHandler" />
         <result column="nick_name" property="nickName"/>
         <result column="icon" property="icon" />
+        <result column="motto" property="motto" />
         <result column="create_time" property="createTime"/>
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="queryByEmailAddress" resultMap="dataMap">
-        select id, email_address, password, first_name, last_name, sex, nick_name, icon, create_time, update_time
+        select id, email_address, password, first_name, last_name, sex, nick_name, icon, motto, create_time, update_time
         from user
         where email_address = #{emailAddress}
     </select>
@@ -34,8 +35,8 @@
     </select>
 
     <insert id="addUser" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO user (email_address, password, first_name, last_name, sex, nick_name, icon, create_time, update_time)
-        VALUES (#{emailAddress}, #{password}, #{firstName}, #{lastName}, #{sex}, #{nickName}, #{icon}, NOW(), NOW())
+        INSERT INTO user (email_address, password, first_name, last_name, sex, nick_name, icon, motto, create_time, update_time)
+        VALUES (#{emailAddress}, #{password}, #{firstName}, #{lastName}, #{sex}, #{nickName}, #{icon}, #{motto}, NOW(), NOW())
     </insert>
 
     <update id="updateNickName" parameterType="java.util.Map">

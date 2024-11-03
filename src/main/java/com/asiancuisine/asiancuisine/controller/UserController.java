@@ -11,10 +11,11 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -55,6 +56,10 @@ public class UserController {
     @PostMapping("/adduser")
     public ResponseEntity<Result<String>> addUser(@RequestBody User user) {
         try {
+            PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            String hashedPassword = passwordEncoder.encode(user.getPassword());
+            user.setPassword(hashedPassword);
+
             int result = userService.addUser(user);
             Long id = userService.queryIdByEmailAddress(user.getEmailAddress());
             userService.updateNickName(id, "Jobless User #" + String.format("%04d", id));
@@ -77,10 +82,12 @@ public class UserController {
         String emailAddress = loginRequest.get("emailAddress");
         String password = loginRequest.get("password");
         String isRemember = loginRequest.get("isRemembered");
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         String dbPassword = userService.queryPasswordByEmailAddress(emailAddress);
-        if (dbPassword != null && dbPassword.equals(password)) {
+        if (dbPassword != null && passwordEncoder.matches(password, dbPassword)) {
             User currentUser = userService.queryByEmailAddress(emailAddress);
+            currentUser.setPassword("");
             Map<String, Object> claims = new HashMap<>();
             claims.put(JwtClaimsKeyConstant.USER_ID, currentUser.getId());
             claims.put(JwtClaimsKeyConstant.EMAIL_ADDRESS, emailAddress);

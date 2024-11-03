@@ -56,6 +56,11 @@ public class User implements Serializable {
     private String icon = "";
 
     /**
+     * user motto
+     */
+    private String motto = "";
+
+    /**
      * create time
      */
     private LocalDateTime createTime;

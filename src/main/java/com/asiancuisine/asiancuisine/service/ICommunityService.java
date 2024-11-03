@@ -7,6 +7,6 @@ import java.io.IOException;
 
 public interface ICommunityService {
 
-    void uploadPost(MultipartFile[] files, String text,  String title) throws IOException;
+    void uploadPost(MultipartFile[] files, String text,  String title,String tags) throws IOException;
 
 }

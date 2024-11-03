@@ -30,7 +30,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     protected void addInterceptors(InterceptorRegistry registry) {
         log.info("Begin registering interceptors...");
         registry.addInterceptor(jwtTokenUserInterceptor)
-                .addPathPatterns("/auth/validate")
+                .addPathPatterns("/auth/validate","/community/upload")
                 .excludePathPatterns("/user/login");
     }
 

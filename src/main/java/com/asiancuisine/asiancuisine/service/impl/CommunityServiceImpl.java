@@ -26,16 +26,15 @@ public class CommunityServiceImpl implements ICommunityService {
     IPostMapper postMapper;
 
     @Override
-    public void uploadPost(MultipartFile[] files, String text, String title) throws IOException {
+    public void uploadPost(MultipartFile[] files, String text, String title, String tags) throws IOException {
         List<String> uploadedUrls = new ArrayList<>();
-
         for(MultipartFile file:files){
             uploadedUrls.add(awsS3Util.uploadFile(file,bucketName));
         }
 
         Long userId = BaseContext.getCurrentId();
         //save userId, text, title, image to database
-        Long postId = postMapper.savaPost(userId,text,title);
+        Long postId = postMapper.savaPost(userId,text,title,tags);
         postMapper.savaImage(postId,uploadedUrls);
     }
 }

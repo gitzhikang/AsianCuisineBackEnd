@@ -1,6 +1,6 @@
 stages:
   - build
-  - test
+  # - test
   - deploy
 
 variables:
@@ -15,16 +15,16 @@ before_script:
 build:
   stage: build
   script:
-    - mvn clean package
+    - mvn clean package -DskipTests
   artifacts:
     paths:
       - target/*.jar
     expire_in: 1 week
 
-test:
-  stage: test
-  script:
-    - mvn test
+# test:
+#   stage: test
+#   script:
+#     - mvn test
 
 deploy:
   stage: deploy

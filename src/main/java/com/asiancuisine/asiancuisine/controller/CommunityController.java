@@ -6,12 +6,13 @@ import com.asiancuisine.asiancuisine.util.AwsS3Util;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -45,5 +46,14 @@ public class CommunityController {
             log.error("File Upload Failed:{}",e);
         }
         return Result.error("File Upload Failed");
+    }
+
+    @ApiOperation("Tags Hint in tags selection page")
+    @GetMapping("/suggestion/{text}")
+    public Result<List<String>> getSuggestion(@PathVariable String text) throws IOException {
+        if(text.equals("") || text == null){
+            return Result.success(new ArrayList<>());
+        }
+       return Result.success(communityService.getSuggestion(text));
     }
 }

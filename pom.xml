@@ -19,13 +19,13 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <elasticsearch.version>7.12.1</elasticsearch.version>
+        <elasticsearch.version>7.17.25</elasticsearch.version>
     </properties>
     <dependencies>
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.12.1</version>
+            <version>7.17.25</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

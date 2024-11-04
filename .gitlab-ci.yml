@@ -21,10 +21,10 @@ build:
       - target/*.jar
     expire_in: 1 week
 
-# test:
-#   stage: test
-#   script:
-#     - mvn test
+test:
+  stage: test
+  script:
+    - mvn test
 
 deploy:
   stage: deploy

@@ -17,7 +17,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,7 +64,7 @@ public class UserController {
 
             int result = userService.addUser(user);
             Long id = userService.queryIdByEmailAddress(user.getEmailAddress());
-            userService.updateNickName(id, "Jobless User #" + String.format("%04d", id));
+            userService.updateNickname(id, "Jobless User #" + String.format("%04d", id));
 
             if (result > 0) {
                 return new ResponseEntity<>(Result.success(), HttpStatus.OK);
@@ -102,8 +104,29 @@ public class UserController {
             responses.put("current_user", currentUser);
             responses.put("token", jwtToken);
             return new ResponseEntity<>(Result.success(responses), HttpStatus.OK);
+        } else if (dbPassword == null) {
+            return new ResponseEntity<>(Result.error("email address does not exist in our database"), HttpStatus.BAD_REQUEST);
         } else {
             return new ResponseEntity<>(Result.error("login failed, password is wrong"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @ApiOperation("Update User Profile")
+    @PostMapping("/updateUserProfile")
+    public ResponseEntity<Result<?>> updateUserProfile(@RequestParam("iconImage") MultipartFile iconImage, @RequestParam("emailAddress") String emailAddress, @RequestParam("nickName") String nickName, @RequestParam("motto") String motto) {
+        try {
+            String iconUri = userService.uploadIconToAWS(iconImage);
+
+            User currentUser = userService.queryByEmailAddress(emailAddress);
+            if (currentUser == null) {
+                return new ResponseEntity<>(Result.error("email address does not exist in our database"), HttpStatus.BAD_REQUEST);
+            }
+            userService.updateUserProfile(currentUser.getId(), iconUri, nickName, motto);
+            return new ResponseEntity<>(Result.success(), HttpStatus.OK);
+        } catch (IOException e) {
+            return new ResponseEntity<>(Result.error("image cannot be uploaded to the remote server, please try again!"), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Result.error("update user profile failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }
 }

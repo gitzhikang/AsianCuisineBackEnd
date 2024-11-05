@@ -39,10 +39,16 @@
         VALUES (#{emailAddress}, #{password}, #{firstName}, #{lastName}, #{sex}, #{nickName}, #{icon}, #{motto}, NOW(), NOW())
     </insert>
 
-    <update id="updateNickName" parameterType="java.util.Map">
+    <update id="updateNickname">
         UPDATE user
         SET nick_name = #{nickName}, update_time = NOW()
-        WHERE id = #{userId}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateUserProfile">
+        UPDATE user
+        SET icon=#{icon}, nick_name = #{nickName}, motto = #{motto}, update_time = NOW()
+        WHERE id = #{id}
     </update>
 
 <!--    <select id="queryById" resultType="com.asiancuisine.asiancuisine.entity.User">-->

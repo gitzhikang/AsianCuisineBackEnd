@@ -27,4 +27,11 @@
         </foreach>
     </insert>
 
+    <insert id="saveTags">
+        INSERT INTO tags (tag)
+        VALUES
+        <foreach collection="tags" item="tag" separator=",">
+            (#{tag})
+        </foreach>
+    </insert>
 </mapper>

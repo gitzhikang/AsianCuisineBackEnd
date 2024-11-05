@@ -9,4 +9,6 @@ public interface IPostMapper {
     Long savaPost(Long userId, String text, String title, String tags);
 
     void savaImage(Long postId, List<String> uris);
+
+    void saveTags(String[] tags);
 }

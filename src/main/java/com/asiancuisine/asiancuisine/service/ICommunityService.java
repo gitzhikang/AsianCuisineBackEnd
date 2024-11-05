@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ICommunityService {
 
-    void uploadPost(MultipartFile[] files, String text,  String title,String tags) throws IOException;
+    void uploadPost(MultipartFile[] files, String text, String title, String tags, String additionalTags) throws IOException;
 
     List<String> getSuggestion(String text) throws IOException;
 }

@@ -4,6 +4,9 @@ import com.asiancuisine.asiancuisine.context.BaseContext;
 import com.asiancuisine.asiancuisine.mapper.IPostMapper;
 import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
+import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -22,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Service
 public class CommunityServiceImpl implements ICommunityService {
 
@@ -38,12 +42,26 @@ public class CommunityServiceImpl implements ICommunityService {
     RestHighLevelClient highLevelClient;
 
     @Override
-    public void uploadPost(MultipartFile[] files, String text, String title, String tags) throws IOException {
+    public void uploadPost(MultipartFile[] files, String text, String title, String tags, String additionalTags) throws IOException {
         List<String> uploadedUrls = new ArrayList<>();
         for(MultipartFile file:files){
             uploadedUrls.add(awsS3Util.uploadFile(file,bucketName));
         }
+        if(additionalTags != null && !additionalTags.equals("")){
+            String[] split = additionalTags.split(",");
+            //save new tags to database
+            postMapper.saveTags(split);
+            //save new tags to elasticsearch
+            for (String tag : split) {
+                try {
+                    highLevelClient.index(new IndexRequest("tags").id(tag).source("tag", tag), RequestOptions.DEFAULT);
+                }catch (IOException e){
+                    log.info("Error while saving tags to elasticsearch:{}",e);
+                }
 
+
+            }
+        }
         Long userId = BaseContext.getCurrentId();
         //save userId, text, title, image to database
         Long postId = postMapper.savaPost(userId,text,title,tags);

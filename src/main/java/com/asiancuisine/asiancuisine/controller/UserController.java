@@ -122,7 +122,12 @@ public class UserController {
                 return new ResponseEntity<>(Result.error("email address does not exist in our database"), HttpStatus.BAD_REQUEST);
             }
             userService.updateUserProfile(currentUser.getId(), iconUri, nickName, motto);
-            return new ResponseEntity<>(Result.success(), HttpStatus.OK);
+
+            // get the updated user
+            User updatedUser = userService.queryByEmailAddress(emailAddress);
+            Map<String, Object> responses = new HashMap<>();
+            responses.put("updated_user", updatedUser);
+            return new ResponseEntity<>(Result.success(responses), HttpStatus.OK);
         } catch (IOException e) {
             return new ResponseEntity<>(Result.error("image cannot be uploaded to the remote server, please try again!"), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {

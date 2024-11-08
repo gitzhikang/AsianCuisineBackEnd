@@ -134,4 +134,24 @@ public class UserController {
             return new ResponseEntity<>(Result.error("update user profile failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }
+
+    @ApiOperation("update password")
+    @PostMapping("/updatePassword")
+    public ResponseEntity<Result<?>> updatePassword(@RequestParam("emailAddress") String emailAddress, @RequestParam("oldPassword") String oldPassword, @RequestParam("newPassword") String newPassword) {
+        try {
+            User currentUser = userService.queryByEmailAddress(emailAddress);
+            if (currentUser == null) {
+                return new ResponseEntity<>(Result.error("email address does not exist in our database"), HttpStatus.BAD_REQUEST);
+            }
+            PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+            if (!passwordEncoder.matches(oldPassword, currentUser.getPassword())) {
+                return new ResponseEntity<>(Result.error("old password does not match"), HttpStatus.BAD_REQUEST);
+            }
+            String hashedPassword = passwordEncoder.encode(newPassword);
+            userService.updatePassword(currentUser.getId(), hashedPassword);
+            return new ResponseEntity<>(Result.success(), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Result.error("update password failed, please retry!"), HttpStatus.BAD_REQUEST);
+        }
+    }
 }

@@ -13,4 +13,5 @@ public interface IUserService {
     void updateNickname(Long id, String nickname);
     void updateUserProfile(Long id, String icon, String nickName, String motto);
     String uploadIconToAWS(MultipartFile file) throws IOException;
+    void updatePassword(Long id, String password);
 }

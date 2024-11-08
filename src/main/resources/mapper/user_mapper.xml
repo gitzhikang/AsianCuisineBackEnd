@@ -51,6 +51,12 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updatePassword">
+        UPDATE user
+        SET password=#{password}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
 <!--    <select id="queryById" resultType="com.asiancuisine.asiancuisine.entity.User">-->
 <!--        select id, phone, password, nickName,icon,createTime,updateTime-->
 <!--        from user-->

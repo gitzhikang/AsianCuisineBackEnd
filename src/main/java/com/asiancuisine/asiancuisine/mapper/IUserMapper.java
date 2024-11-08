@@ -12,4 +12,5 @@ public interface IUserMapper {
     Long queryIdByEmailAddress(String emailAddress);
     void updateNickname(@Param("id") Long id, @Param("nickName") String nickName);
     void updateUserProfile(@Param("id") Long id, @Param("icon") String icon, @Param("nickName") String nickName, @Param("motto") String motto);
+    void updatePassword(@Param("id") Long id, @Param("password") String password);
 }

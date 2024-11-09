@@ -30,7 +30,7 @@ class AsianCuisineApplicationTests {
     @Test
     void createIndex() throws IOException {
         CreateIndexRequest requst = new CreateIndexRequest("post");
-        requst.source(PostConstants.MAPPING_TEMPLATE, XContentType.JSON);
+//        requst.source(PostConstants.MAPPING_TEMPLATE, XContentType.JSON);
         restHighLevelClient.indices().create(requst, RequestOptions.DEFAULT);
     }
 

@@ -57,4 +57,9 @@ public class UserService implements IUserService {
     public String uploadIconToAWS(MultipartFile file) throws IOException {
         return awsS3Util.uploadFile(file,bucketName);
     }
+
+    @Override
+    public void updatePassword(Long id, String password) {
+        userMapper.updatePassword(id, password);
+    }
 }

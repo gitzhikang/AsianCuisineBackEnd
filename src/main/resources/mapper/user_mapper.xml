@@ -51,10 +51,10 @@
         WHERE id = #{id}
     </update>
 
-<!--    <select id="queryById" resultType="com.asiancuisine.asiancuisine.entity.User">-->
-<!--        select id, phone, password, nickName,icon,createTime,updateTime-->
-<!--        from user-->
-<!--        where id = #{id}-->
-<!--    </select>-->
+    <select id="queryById" resultMap="dataMap">
+        select id, email_address, password, first_name, last_name, sex, nick_name, icon, motto, create_time, update_time
+        from user
+        where id = #{id}
+    </select>
 
 </mapper>

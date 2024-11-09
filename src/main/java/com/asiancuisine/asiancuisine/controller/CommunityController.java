@@ -1,15 +1,13 @@
 package com.asiancuisine.asiancuisine.controller;
 
 import com.asiancuisine.asiancuisine.Result.Result;
+import com.asiancuisine.asiancuisine.context.BaseContext;
 import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
+import com.asiancuisine.asiancuisine.vo.PostReviewReturnVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.search.suggest.SuggestBuilder;
-import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -56,4 +54,17 @@ public class CommunityController {
         }
        return Result.success(communityService.getSuggestion(text));
     }
+
+    @ApiOperation("Get Post Review List")
+    @GetMapping("/getPostPreview")
+    public Result<PostReviewReturnVO> getPostPreview(@RequestParam("scrollId") String scrollId, @RequestParam("cacheTime") Long cacheTime) throws IOException {
+//        Long currentUserId = BaseContext.getCurrentId();
+        Long currentUserId=15L;
+        PostReviewReturnVO postReviewReturnVO= communityService.getRecommendPostPreviewByUserId(currentUserId, scrollId, cacheTime);
+        return Result.success(postReviewReturnVO);
+    }
+
+
+
+
 }

@@ -5,14 +5,14 @@
 
 <mapper namespace="com.asiancuisine.asiancuisine.mapper.IPostMapper">
     <!-- Insert statement to save post -->
-    <insert id="savaPost" useGeneratedKeys="true">
+    <insert id="savaPost" useGeneratedKeys="true" keyProperty="id">
         <!-- Assuming you have a table named `posts` -->
-        INSERT INTO post (user_id, title, text
+        INSERT INTO post (user_id, title, text,first_image_url
         <if test="tags != null and tags != ''">
             , tags
         </if>
         )
-        VALUES (#{userId}, #{title}, #{text}
+        VALUES (#{userId}, #{title}, #{text},#{firstImageUrl}
         <if test="tags != null and tags != ''">
             , #{tags}
         </if>

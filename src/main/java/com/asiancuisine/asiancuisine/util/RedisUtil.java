@@ -2,11 +2,13 @@ package com.asiancuisine.asiancuisine.util;
 
 import com.asiancuisine.asiancuisine.constant.RedisConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,5 +39,13 @@ public class RedisUtil {
         }
     }
 
+    // Save verification code to Redis with expiration time
+    public void saveVerificationCode(Long userId, String code) {
+        stringRedisTemplate.opsForValue().set(RedisConstants.VERIFICATION_KEY+userId, code, RedisConstants.VERIFICATION_CODE_EXPIRED_TIME_SECONDS, TimeUnit.SECONDS);
+    }
 
+    // Get verification code from Redis
+    public String getVerificationCode(Long userId) {
+        return stringRedisTemplate.opsForValue().get(RedisConstants.VERIFICATION_KEY + userId);
+    }
 }

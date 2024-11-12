@@ -1,77 +1,128 @@
 package com.asiancuisine.asiancuisine.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import javax.mail.*;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.gmail.GmailScopes;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.model.Message;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+
+import javax.mail.MessagingException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-
-import java.util.Properties;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 public class GmailUtil {
 
-    private final Logger logger = LoggerFactory.getLogger(GmailUtil.class);
+    public static void sendVerificationEmail(String toEmailAddress, int verificationCode) throws Exception {
+        // load template
+        String htmlTemplate = loadEmailTemplate("gmail/email_template.html");
 
-    private final String senderEmail;
+        // replace {verification-code} to your real verification code
+        String verificationCodeStr = formatNumberWithSpaces(verificationCode);
+        String htmlContent = htmlTemplate.replace("{verification-code}", verificationCodeStr);
 
-    private final String senderPassword;
-
-    public GmailUtil(String senderEmail, String senderPassword, String toUser) {
-        this.senderEmail = senderEmail;
-        this.senderPassword = senderPassword;
-        this.toUser = toUser;
+        // send email
+        sendEmail(toEmailAddress, "[ACFJ] Reset Password Verification Code", htmlContent);
     }
 
-    private final String toUser;
+    public static void sendEmail(String to, String subject, String bodyHtml) throws Exception {
+        Gmail service = GmailService.getGmailService();
+        MimeMessage email = createEmail(to, "asiancuisineforjobless@gmail.com", subject, bodyHtml);
+        Message message = createMessageWithEmail(email);
+        service.users().messages().send("me", message).execute();
+    }
 
-    private static final String subject = "Code review finished!";
+    public static String loadEmailTemplate(String templatePath) throws IOException {
+        InputStream inputStream = GmailUtil.class.getClassLoader().getResourceAsStream(templatePath);
 
-    public void publishMessage(String logUrl,String content){
-        // 设置 Gmail 的 SMTP 属性
-        Properties properties = new Properties();
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");
-        properties.put("mail.smtp.host", "smtp.gmail.com");
-        properties.put("mail.smtp.port", "587");
+        if (inputStream == null) {
+            throw new IOException("Resource not found: " + templatePath);
+        }
 
-        // 邮箱认证
-        final String myAccountEmail = senderEmail;  // 你的 Gmail 地址
-        final String password = senderPassword;  // Gmail 应用程序密码
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return reader.lines().collect(Collectors.joining("\n"));
+        }
+    }
 
-        // 创建会话
-        Session session = Session.getInstance(properties, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(myAccountEmail, password);
+    private static MimeMessage createEmail(String to, String from, String subject, String bodyText) throws MessagingException {
+        javax.mail.Session session = javax.mail.Session.getDefaultInstance(new java.util.Properties(), null);
+        MimeMessage email = new MimeMessage(session);
+        email.setFrom(new InternetAddress(from));
+        email.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
+        email.setSubject(subject);
+        email.setContent(bodyText, "text/html; charset=utf-8");
+        return email;
+    }
+
+    private static Message createMessageWithEmail(MimeMessage emailContent) throws MessagingException, IOException {
+        java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+        emailContent.writeTo(buffer);
+        byte[] bytes = buffer.toByteArray();
+        String encodedEmail = Base64.getUrlEncoder().encodeToString(bytes);
+        Message message = new Message();
+        message.setRaw(encodedEmail);
+        return message;
+    }
+
+    private static String formatNumberWithSpaces(int number) {
+        String numberStr = String.valueOf(number);
+        StringBuilder formatted = new StringBuilder();
+        for (int i = 0; i < numberStr.length(); i++) {
+            formatted.append(numberStr.charAt(i));
+            if (i < numberStr.length() - 1) {
+                formatted.append(" ");
             }
-        });
-
-        try {
-            // 创建带有 HTML 内容的邮件
-            Message message = prepareMessage(session, myAccountEmail, toUser, subject, content);
-
-            // 发送邮件
-            Transport.send(message);
-            logger.info("HTML 邮件已发送成功！");
-        } catch (MessagingException e) {
-            e.printStackTrace();
         }
+        return formatted.toString();
+    }
+}
+
+class GmailService {
+    private static final String APPLICATION_NAME = "asfj-email-backend";
+    private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+    private static final String CREDENTIALS_FILE_PATH = "/gmail/token.json";
+    private static final String TOKENS_DIRECTORY_PATH = System.getProperty("user.home") + "/.credentials/asfj-email-backend/tokens";
+
+    public static Gmail getGmailService() throws GeneralSecurityException, IOException {
+        InputStream serviceAccountTokenStream = GmailService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        if (serviceAccountTokenStream == null) {
+            throw new IOException("Could not find token.json");
+        }
+
+        Credential credential = getCredentials();
+        return new Gmail.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, credential)
+                .setApplicationName(APPLICATION_NAME)
+                .build();
     }
 
-    private static Message prepareMessage(Session session, String myAccountEmail, String recipient, String subject, String htmlContent) {
-        try {
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(myAccountEmail));
-            message.setRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
-            message.setSubject(subject);
-
-            // 设置邮件内容为 HTML
-            message.setContent(htmlContent, "text/html;charset=utf-8");
-
-            return message;
-        } catch (MessagingException e) {
-            e.printStackTrace();
+    private static Credential getCredentials() throws IOException, GeneralSecurityException {
+        InputStream credentialsStream = GmailService.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        if (credentialsStream == null) {
+            throw new IOException("Resource not found: " + CREDENTIALS_FILE_PATH);
         }
-        return null;
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(credentialsStream));
+
+        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, Collections.singleton(GmailScopes.GMAIL_SEND))
+                .setDataStoreFactory(new FileDataStoreFactory(new File(TOKENS_DIRECTORY_PATH)))
+                .setAccessType("offline")
+                .build();
+
+        return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
     }
 }

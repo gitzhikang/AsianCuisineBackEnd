@@ -59,3 +59,9 @@ jwt:
   user-ttl-not-remembered: 86400000
   # Set token name from frontend (in http header)
   user-token-name: Authorization
+  # reset password secret key
+  reset-password-secret-key: resetpassword
+  # expire time for resetting the password
+  reset-password-ttl: 600000
+  # set token name from frontend (in http header)
+  reset-password-token-name: Authorization

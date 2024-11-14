@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiancuisine.asiancuisine.mapper.ICollectionsRecipesMapper">
+    <resultMap id="dataMap" type="com.asiancuisine.asiancuisine.entity.UserCollection">
+        <id column="user_id" property="userId"/>
+        <id column="collection_id" property="collectionId"/>
+        <result column="recipe_url" property="recipeUrl"/>
+        <result column="recipe_image" property="recipeImage"/>
+        <result column="recipe_label" property="recipeLabel"/>
+        <result column="recipe_time" property="recipeTime"/>
+    </resultMap>
+
+    <select id="queryRecipesByUserIdAndCollectionId" resultMap="dataMap">
+        SELECT recipe_url, recipe_image, recipe_label, recipe_time
+        FROM collections_recipes
+        WHERE user_id = #{userId} AND collection_id = #{collectionId}
+    </select>
+
+    <select id="checkRecipesInCollection" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM collections_recipes
+        WHERE user_id = #{userId} AND recipe_url = #{recipeUrl} AND recipe_image = #{recipeImage} AND recipe_label = #{recipeLabel} AND recipe_time = #{recipeTime}
+    </select>
+
+    <insert id="addRecipeToCollection" useGeneratedKeys="false">
+        INSERT INTO collections_recipes (user_id, collection_id, recipe_url, recipe_image, recipe_label, recipe_time)
+        VALUES (#{userId}, #{collectionId}, #{recipe_url}, #{recipe_image}, #{recipe_label}, #{recipe_time})
+    </insert>
+
+</mapper>

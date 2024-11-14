@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.asiancuisine.asiancuisine.mapper.ICollectionsMapper">
+    <resultMap id="dataMap" type="com.asiancuisine.asiancuisine.entity.MyCollection">
+        <id column="collection_id" property="collectionId"/>
+        <result column="collection_name" property="collectionName"/>
+        <result column="collection_img" property="collectionImg"/>
+        <result column="user_id" property="userId"/>
+    </resultMap>
+
+    <select id="queryCollectionsByUserId" resultMap="dataMap">
+        SELECT collection_id, collection_name, collection_img
+        FROM collections
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="addCollection" useGeneratedKeys="true" keyProperty="collectionId">
+        INSERT INTO collections (collection_name, collection_img, user_id)
+        VALUES (#{collectionName}, #{collectionImg}, #{userId})
+    </insert>
+</mapper>

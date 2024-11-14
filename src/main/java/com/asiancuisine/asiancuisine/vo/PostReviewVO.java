@@ -10,9 +10,10 @@ import lombok.experimental.Accessors;
 public class PostReviewVO {
     private Long id;
     private String userName;
-    private String userIconUrl;
+    private String avatarUrl;
     private String title;
-    private String firstImageUrl;
-    private int likes;
+    private String image;
+    private int favoriteCount;
+    private boolean isFavorite;
 }
 

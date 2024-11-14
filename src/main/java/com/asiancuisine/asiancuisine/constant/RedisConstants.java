@@ -10,5 +10,11 @@ public class RedisConstants {
 
     public static final String USER_TAGS_KEY = "user_tags_key:";
 
+    public static final String ALL_TAGS = "tags";
+
     public static final String POST_LIKES = "post_likes:";
+
+    public static final String USER_POST_LIKED = "user_post_liked:";
+
+
 }

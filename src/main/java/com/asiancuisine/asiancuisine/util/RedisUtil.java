@@ -5,9 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.data.redis.connection.RedisConnection;
 
 @Component
 public class RedisUtil {
@@ -35,6 +37,24 @@ public class RedisUtil {
         for(int index = 0;index<tags.size();index++){
             stringRedisTemplate.opsForZSet().incrementScore(RedisConstants.HOT_TAGS_KEY, tags.get(index), 1);
         }
+    }
+
+    public List<Boolean> findTagsIsExist(List<String> tags) {
+
+       List<Object> results = stringRedisTemplate.executePipelined((RedisConnection connection) -> {
+            byte[] rawKey = stringRedisTemplate.getStringSerializer().serialize(RedisConstants.ALL_TAGS);
+            byte[][] rawElements = tags.stream()
+                    .map(stringRedisTemplate.getStringSerializer()::serialize)
+                    .toArray(byte[][]::new);
+
+            // Call the underlying smIsMember method
+            connection.openPipeline();
+            for (byte[] rawElement : rawElements) {
+                connection.setCommands().sIsMember(rawKey, rawElement);
+            }
+            return null;
+        });
+        return results.stream().map(result -> (Boolean) result).collect(Collectors.toList());
     }
 
 

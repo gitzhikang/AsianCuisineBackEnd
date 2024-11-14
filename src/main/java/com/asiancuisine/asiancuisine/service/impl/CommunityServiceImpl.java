@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,26 +63,39 @@ public class CommunityServiceImpl implements ICommunityService {
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public void uploadPost(MultipartFile[] files, String text, String title, String tags, String additionalTags) throws IOException {
+    public void uploadPost(MultipartFile[] files, String text, String title, String tags) throws IOException {
         List<String> uploadedUrls = new ArrayList<>();
         for(MultipartFile file:files){
             uploadedUrls.add(awsS3Util.uploadFile(file,bucketName));
         }
-        if(additionalTags != null && !additionalTags.equals("")){
-            String[] split = additionalTags.split(",");
+        String[] tagsArray = tags.split(",");
+
+        //get new tags
+        List<Boolean> tagsIsExist = redisUtil.findTagsIsExist(Arrays.asList(tagsArray));
+        List<String> newTags = new ArrayList<>();
+        for(int i = 0; i < tagsIsExist.size(); i++) {
+            if (!tagsIsExist.get(i)) {
+                newTags.add(tagsArray[i]);
+            }
+        }
+
+        if(newTags!=null && newTags.size()>0){
+            //save new tags to redis
+            stringRedisTemplate.opsForSet().add(RedisConstants.ALL_TAGS, newTags.toArray(new String[0]));
+
             //save new tags to database
-            postMapper.saveTags(split);
+            postMapper.saveTags(newTags.toArray(new String[0]));
             //save new tags to elasticsearch
-            for (String tag : split) {
+            for (String tag : newTags.toArray(new String[0])) {
                 try {
                     highLevelClient.index(new IndexRequest("tags").id(tag).source("tag", tag), RequestOptions.DEFAULT);
                 }catch (IOException e){
                     log.info("Error while saving tags to elasticsearch:{}",e);
                 }
-
-
             }
         }
+
+
         Long userId = BaseContext.getCurrentId();
         String firstImageUrl = uploadedUrls.get(0);
         //save userId, text, title, image to database
@@ -168,7 +182,10 @@ public class CommunityServiceImpl implements ICommunityService {
             Set<String> top3HotTags = redisUtil.getTop3HotTags();
 
             //Combine 2 set
+
             tagsByUserId.addAll(top3HotTags);
+
+
 
             //3.using tags(from user and 1 random hot tags) to search in elastic search(should generate different page result)
             //search post_content in index "post_preview" with tags in tagsByUserId
@@ -183,7 +200,7 @@ public class CommunityServiceImpl implements ICommunityService {
 
         }else {
             SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-            scrollRequest.scroll(scroll);
+            scrollRequest.scroll(TimeValue.timeValueMinutes(1));
             searchResponse = highLevelClient.scroll(scrollRequest, RequestOptions.DEFAULT);
             scrollId = searchResponse.getScrollId();
             cacheNewExpireTime = cacheExpireTime;
@@ -199,34 +216,40 @@ public class CommunityServiceImpl implements ICommunityService {
     }
 
     private PostReviewVO convertToPostReviewVO(SearchHit hit) {
-    Map<String, Object> sourceAsMap = hit.getSourceAsMap();
-    Long userId = ((Number) sourceAsMap.get("user_id")).longValue();
+        Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+        Long userId = ((Number) sourceAsMap.get("user_id")).longValue();
 
-    // Try to get user details from Redis
-    String userIcon = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "icon");
-    String userNickName = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "nickName");
+        // Try to get user details from Redis
+        String userIcon = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "icon");
+        String userNickName = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "nickName");
 
-    // If not found in Redis, get from database
-    if (userIcon == null || userNickName == null) {
-        User user = userMapper.queryById(userId);
-        userIcon = user.getIcon();
-        userNickName = user.getNickName();
+        // If not found in Redis, get from database
+        if (userIcon == null || userNickName == null) {
+            User user = userMapper.queryById(userId);
+            userIcon = user.getIcon();
+            userNickName = user.getNickName();
 
-        // Store user details in Redis
-        stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "icon", userIcon);
-        stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "nickName", userNickName);
-        stringRedisTemplate.expire(RedisConstants.USER_PREVIEW_KEY + userId, 1, TimeUnit.DAYS);
+            // Store user details in Redis
+            stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "icon", userIcon);
+            stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "nickName", userNickName);
+            stringRedisTemplate.expire(RedisConstants.USER_PREVIEW_KEY + userId, 1, TimeUnit.DAYS);
 
-    }
-    Long id = ((Number) sourceAsMap.get("id")).longValue();
-    Integer likes = Integer.valueOf(stringRedisTemplate.opsForValue().get(RedisConstants.POST_LIKES+id)==null?"0":stringRedisTemplate.opsForValue().get(RedisConstants.POST_LIKES+id));
+        }
 
-    return new PostReviewVO()
-            .setId(id)
-            .setUserName(userNickName)
-            .setUserIconUrl(userIcon)
-            .setTitle((String) sourceAsMap.get("title"))
-            .setFirstImageUrl((String) sourceAsMap.get("firstImageUrl"))
-            .setLikes(likes);
+        //get likes for post from redis
+        //get current post id
+        Long id = ((Number) sourceAsMap.get("id")).longValue();
+        Integer likes = Integer.valueOf(stringRedisTemplate.opsForValue().get(RedisConstants.POST_LIKES+id)==null?"0":stringRedisTemplate.opsForValue().get(RedisConstants.POST_LIKES+id));
+        //get if the user like the post before
+        Boolean userPostLiked = stringRedisTemplate.opsForSet().isMember(RedisConstants.USER_POST_LIKED + BaseContext.getCurrentId(), id.toString());
+
+        return new PostReviewVO()
+                .setId(id)
+                .setUserName(userNickName)
+                .setAvatarUrl(userIcon)
+                .setTitle((String) sourceAsMap.get("title"))
+                .setImage((String) sourceAsMap.get("firstImageUrl"))
+                .setFavoriteCount(likes)
+                .setFavorite(userPostLiked);
 }
 }

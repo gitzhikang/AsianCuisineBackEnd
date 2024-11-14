@@ -2,6 +2,7 @@ package com.asiancuisine.asiancuisine.util;
 
 import com.asiancuisine.asiancuisine.constant.RedisConstants;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 

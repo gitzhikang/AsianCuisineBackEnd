@@ -1,5 +1,6 @@
 package com.asiancuisine.asiancuisine.config;
 
+import com.asiancuisine.asiancuisine.interceptor.JwtTokenResetPasswordInterceptor;
 import com.asiancuisine.asiancuisine.interceptor.JwtTokenUserInterceptor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +23,11 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     @Autowired
     private JwtTokenUserInterceptor jwtTokenUserInterceptor;
 
+    @Autowired
+    private JwtTokenResetPasswordInterceptor jwtTokenResetPasswordInterceptor;
+
     /**
-     * 注册自定义拦截器
+     * register self-defined interceptor
      *
      * @param registry
      */
@@ -32,6 +36,9 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
         registry.addInterceptor(jwtTokenUserInterceptor)
                 .addPathPatterns("/auth/validate","/community/upload")
                 .excludePathPatterns("/user/login");
+        registry.addInterceptor(jwtTokenResetPasswordInterceptor)
+                .addPathPatterns("/user/resetPassword")
+                .excludePathPatterns();
     }
 
     @Bean

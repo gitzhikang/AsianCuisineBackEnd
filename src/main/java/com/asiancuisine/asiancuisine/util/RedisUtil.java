@@ -1,6 +1,8 @@
 package com.asiancuisine.asiancuisine.util;
 
 import com.asiancuisine.asiancuisine.constant.RedisConstants;
+import com.asiancuisine.asiancuisine.entity.User;
+import com.asiancuisine.asiancuisine.mapper.IUserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -16,6 +18,9 @@ public class RedisUtil {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private IUserMapper userMapper;
 
     //save tags to user record
     public void saveTagsByUserId(Long userId, List<String> tags) {
@@ -56,6 +61,28 @@ public class RedisUtil {
         });
         return results.stream().map(result -> (Boolean) result).collect(Collectors.toList());
     }
+
+    public String[] getUserInfoPreview(Long userId){
+        // Try to get user details from Redis
+        String userIcon = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "icon");
+        String userNickName = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "nickName");
+
+        // If not found in Redis, get from database
+        if (userIcon == null || userNickName == null) {
+            User user = userMapper.queryById(userId);
+            userIcon = user.getIcon();
+            userNickName = user.getNickName();
+
+            // Store user details in Redis
+            stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "icon", userIcon);
+            stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "nickName", userNickName);
+            stringRedisTemplate.expire(RedisConstants.USER_PREVIEW_KEY + userId, 1, TimeUnit.DAYS);
+
+        }
+        return new String[]{userIcon, userNickName};
+    }
+
+
 
     // Save verification code to Redis with expiration time
     public void saveVerificationCode(Long userId, String code) {

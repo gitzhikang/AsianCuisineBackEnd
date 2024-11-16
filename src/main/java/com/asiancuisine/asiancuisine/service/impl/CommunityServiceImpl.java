@@ -3,13 +3,16 @@ package com.asiancuisine.asiancuisine.service.impl;
 import com.asiancuisine.asiancuisine.constant.PostConstants;
 import com.asiancuisine.asiancuisine.constant.RedisConstants;
 import com.asiancuisine.asiancuisine.context.BaseContext;
+import com.asiancuisine.asiancuisine.entity.Comment;
 import com.asiancuisine.asiancuisine.entity.User;
+import com.asiancuisine.asiancuisine.mapper.ICommentMapper;
 import com.asiancuisine.asiancuisine.mapper.IPostMapper;
 import com.asiancuisine.asiancuisine.mapper.IUserMapper;
 import com.asiancuisine.asiancuisine.po.Post;
 import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
 import com.asiancuisine.asiancuisine.util.RedisUtil;
+import com.asiancuisine.asiancuisine.vo.ArticleVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewReturnVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewVO;
 import lombok.extern.slf4j.Slf4j;
@@ -59,8 +62,12 @@ public class CommunityServiceImpl implements ICommunityService {
 
     @Autowired
     RedisUtil redisUtil;
+
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private ICommentMapper commentMapper;
 
     @Override
     public void uploadPost(MultipartFile[] files, String text, String title, String tags) throws IOException {
@@ -99,28 +106,20 @@ public class CommunityServiceImpl implements ICommunityService {
         Long userId = BaseContext.getCurrentId();
         String firstImageUrl = uploadedUrls.get(0);
         //save userId, text, title, image to database
-        Post post = Post.builder().userId(userId).text(text).title(title).tags(tags).firstImageUrl(firstImageUrl).build();
+        Post post = new Post();
+        post.setUserId(userId);
+        post.setText(text);
+        post.setTitle(title);
+        post.setTags(tags);
+        post.setFirstImageUrl(firstImageUrl);
         postMapper.savaPost(post);
         Long postId = post.getId();
         postMapper.savaImage(postId,uploadedUrls);
 
 //        Get user details from Redis
-        // Try to get user details from Redis
-        String userIcon = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "icon");
-        String userNickName = (String) stringRedisTemplate.opsForHash().get(RedisConstants.USER_PREVIEW_KEY + userId, "nickName");
-
-        // If not found in Redis, get from database
-        if (userIcon == null || userNickName == null) {
-            User user = userMapper.queryById(userId);
-            userIcon = user.getIcon();
-            userNickName = user.getNickName();
-
-            // Store user details in Redis
-            stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "icon", userIcon);
-            stringRedisTemplate.opsForHash().put(RedisConstants.USER_PREVIEW_KEY + userId, "nickName", userNickName);
-            stringRedisTemplate.expire(RedisConstants.USER_PREVIEW_KEY + userId, 1, TimeUnit.DAYS);
-
-        }
+        String[] userInfoPreview = redisUtil.getUserInfoPreview(userId);
+        String userIcon = userInfoPreview[0];
+        String userNickName = userInfoPreview[1];
 
         //save tags to redis
         if(tags != null && !tags.equals("")){
@@ -213,6 +212,42 @@ public class CommunityServiceImpl implements ICommunityService {
         log.info("Recommended post previews: {}", postPreviews);
         return PostReviewReturnVO.builder().cacheExpireTime(cacheNewExpireTime).scrollId(scrollId).postReviewVO(postPreviews).build();
 
+    }
+
+    @Override
+    public ArticleVO getPostDetail(Long postId) {
+        //query post detail from database
+        Post post = postMapper.queryPostById(postId);
+        //get user details from Redis
+        String[] userInfoPreview = redisUtil.getUserInfoPreview(post.getUserId());
+        String userIcon = userInfoPreview[0];
+        String userNickName = userInfoPreview[1];
+        //Phrase tags into array
+        String[] tagsArray = new String[0];
+        if (post.getTags() != null && !post.getTags().equals("")) {
+            tagsArray = post.getTags().split(",");
+        }
+        //get images from database
+        List<String> images = postMapper.queryImagesByPostId(postId);
+        //get likes for post from redis
+        Integer likes = Integer.valueOf(stringRedisTemplate.opsForValue().get(RedisConstants.POST_LIKES+postId)==null?"0":stringRedisTemplate.opsForValue().get(RedisConstants.POST_LIKES+postId));
+        //get if the user like the post before
+        Boolean userPostLiked = stringRedisTemplate.opsForSet().isMember(RedisConstants.USER_POST_LIKED + BaseContext.getCurrentId(), postId.toString());
+        //get comments from database
+        List<Comment> comments = commentMapper.getTopLevelComments(postId);
+
+        //build ArticleVO
+        return ArticleVO.builder()
+                .id(postId)
+                .title(post.getTitle())
+                .desc(post.getText())
+                .tag(tagsArray)
+                .userName(userNickName)
+                .avatarUrl(userIcon)
+                .images(images.toArray(new String[0]))
+                .favoriteCount(likes)
+                .isFavorite(userPostLiked)
+                .comments(comments).build();
     }
 
     private PostReviewVO convertToPostReviewVO(SearchHit hit) {

@@ -10,13 +10,13 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
-@Builder
 public class Post {
     private Long id;
     private Long userId;
     private String title;
     private String text;
     private String firstImageUrl;
+    private String location;
     private String tags;
     private Date createTime;
     private Integer likedCount;

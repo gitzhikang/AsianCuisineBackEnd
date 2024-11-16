@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.asiancuisine.asiancuisine.mapper.ICommentMapper">
+    <resultMap id="CommentResultMap" type="com.asiancuisine.asiancuisine.entity.Comment">
+        <id property="id" column="id"/>
+        <result property="postId" column="post_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="content" column="content"/>
+        <result property="favoriteCount" column="favorite_count"/>
+        <result property="createTime" column="create_time"/>
+        <result property="location" column="location"/>
+        <collection property="childComments" ofType="Comment" select="getChildComments" column="id"/>
+    </resultMap>
+    <!-- query top level comments -->
+    <select id="getTopLevelComments" resultMap="CommentResultMap">
+        SELECT * FROM post_comment WHERE post_id = #{postId} AND parent_id IS NULL ORDER BY create_time
+    </select>
+
+    <!-- query child comments -->
+    <select id="getChildComments" resultMap="CommentResultMap">
+        SELECT * FROM post_comment WHERE parent_id = #{parentId} ORDER BY create_time
+    </select>
+
+
+
+</mapper>

@@ -4,6 +4,7 @@ import com.asiancuisine.asiancuisine.Result.Result;
 import com.asiancuisine.asiancuisine.context.BaseContext;
 import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
+import com.asiancuisine.asiancuisine.vo.ArticleVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewReturnVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -59,9 +60,15 @@ public class CommunityController {
     @GetMapping("/getPostPreview")
     public Result<PostReviewReturnVO> getPostPreview(@RequestParam("scrollId") String scrollId, @RequestParam("cacheTime") Long cacheTime) throws IOException {
 //        Long currentUserId = BaseContext.getCurrentId();
-        Long currentUserId=15L;
+        Long currentUserId = 15L;
         PostReviewReturnVO postReviewReturnVO= communityService.getRecommendPostPreviewByUserId(currentUserId, scrollId, cacheTime);
         return Result.success(postReviewReturnVO);
+    }
+
+    @ApiOperation("Get Post Detail")
+    @GetMapping("/getPostDetail/{postId}")
+    public Result<ArticleVO> getPostDetail(@PathVariable Long postId) throws IOException {
+        return success(communityService.getPostDetail(postId));
     }
 
 

@@ -4,6 +4,20 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="com.asiancuisine.asiancuisine.mapper.IPostMapper">
+
+    <resultMap id="PostResultMap" type="com.asiancuisine.asiancuisine.po.Post">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="title" column="title"/>
+        <result property="text" column="text"/>
+        <result property="firstImageUrl" column="first_image_url"/>
+        <result property="location" column="location"/>
+        <result property="createTime" column="create_time"/>
+        <result property="tags" column="tags"/>
+        <result property="likedCount" column="liked_count"/>
+        <result property="commentCount" column="comment_count"/>
+    </resultMap>
+
     <!-- Insert statement to save post -->
     <insert id="savaPost" useGeneratedKeys="true" keyProperty="id">
         <!-- Assuming you have a table named `posts` -->
@@ -34,4 +48,13 @@
             (#{tag})
         </foreach>
     </insert>
+
+    <select id="queryPostById" resultMap="PostResultMap">
+        SELECT id,user_id,title,text,liked_count,comment_count,create_time,tags,first_image_url,location FROM post WHERE id = #{id}
+    </select>
+
+    <select id="queryImagesByPostId" resultType="String">
+        SELECT uri FROM post_image WHERE post_id = #{postId}
+    </select>
+
 </mapper>

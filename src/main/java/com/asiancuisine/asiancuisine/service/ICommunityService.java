@@ -1,6 +1,7 @@
 package com.asiancuisine.asiancuisine.service;
 
 
+import com.asiancuisine.asiancuisine.vo.ArticleVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewReturnVO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,4 +15,6 @@ public interface ICommunityService {
     List<String> getSuggestion(String text) throws IOException;
 
     PostReviewReturnVO getRecommendPostPreviewByUserId(Long currentUserId, String scrollId, Long cacheTime) throws IOException;
+
+    ArticleVO getPostDetail(Long postId);
 }

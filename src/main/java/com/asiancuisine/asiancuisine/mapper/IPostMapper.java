@@ -13,4 +13,8 @@ public interface IPostMapper {
     void saveTags(String[] tags);
 
     Long savaPost(Post post);
+
+    Post queryPostById(Long postId);
+
+    List<String> queryImagesByPostId(Long postId);
 }

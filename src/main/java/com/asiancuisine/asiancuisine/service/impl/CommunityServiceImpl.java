@@ -3,6 +3,7 @@ package com.asiancuisine.asiancuisine.service.impl;
 import com.asiancuisine.asiancuisine.constant.PostConstants;
 import com.asiancuisine.asiancuisine.constant.RedisConstants;
 import com.asiancuisine.asiancuisine.context.BaseContext;
+import com.asiancuisine.asiancuisine.dto.SendCommentDTO;
 import com.asiancuisine.asiancuisine.entity.Comment;
 import com.asiancuisine.asiancuisine.entity.User;
 import com.asiancuisine.asiancuisine.mapper.ICommentMapper;
@@ -13,6 +14,7 @@ import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
 import com.asiancuisine.asiancuisine.util.RedisUtil;
 import com.asiancuisine.asiancuisine.vo.ArticleVO;
+import com.asiancuisine.asiancuisine.vo.CommentVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewReturnVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewVO;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +41,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -235,6 +236,7 @@ public class CommunityServiceImpl implements ICommunityService {
         Boolean userPostLiked = stringRedisTemplate.opsForSet().isMember(RedisConstants.USER_POST_LIKED + BaseContext.getCurrentId(), postId.toString());
         //get comments from database
         List<Comment> comments = commentMapper.getTopLevelComments(postId);
+        List<CommentVO> commentVO = convertToCommentVO(comments);
 
         //build ArticleVO
         return ArticleVO.builder()
@@ -247,7 +249,50 @@ public class CommunityServiceImpl implements ICommunityService {
                 .images(images.toArray(new String[0]))
                 .favoriteCount(likes)
                 .isFavorite(userPostLiked)
-                .comments(comments).build();
+                .comments(commentVO).build();
+    }
+
+    @Override
+    public void sendCommentPost(SendCommentDTO sendCommentDTO) {
+        //judge if the comment is a reply
+        if(sendCommentDTO.getParentCommentId() == -1){
+            // is not a reply
+            commentMapper.saveParentComment(sendCommentDTO);
+            stringRedisTemplate.opsForValue().increment(RedisConstants.POST_COMMENTS_COUNT+sendCommentDTO.getPostId());
+            stringRedisTemplate.opsForValue().set(RedisConstants.POST_COMMENTS_LIKES+sendCommentDTO.getId(), "0");
+        }else {
+            // is a reply
+            commentMapper.saveChildComment(sendCommentDTO);
+            stringRedisTemplate.opsForValue().set(RedisConstants.POST_COMMENTS_LIKES+sendCommentDTO.getId(), "0");
+        }
+    }
+
+    private List<CommentVO> convertToCommentVO(List<Comment> comments) {
+        List<CommentVO> ans = new ArrayList<>();
+        for (Comment comment : comments) {
+            String[] userInfoPreview = redisUtil.getUserInfoPreview(comment.getUserId());
+            String avatarUrl = userInfoPreview[0];
+            String userName = userInfoPreview[1];
+            boolean isFavorite = stringRedisTemplate.opsForSet().isMember(RedisConstants.USER_COMMENT_LIKED + BaseContext.getCurrentId(), comment.getId().toString());
+            List<CommentVO> children = null;
+            if(comment.getChildComments() !=null && comment.getChildComments().size() > 0){
+                children = convertToCommentVO(comment.getChildComments());
+            }
+            ans.add(CommentVO.builder()
+                    .id(comment.getId())
+                    .postId(comment.getPostId())
+                    .avatarUrl(avatarUrl)
+                    .userName(userName)
+                    .message(comment.getContent())
+                    .favoriteCount(comment.getFavoriteCount())
+                    .isFavorite(isFavorite)
+                    .dateTime(comment.getCreateTime())
+                    .location(comment.getLocation())
+                    .children(children)
+                    .build());
+        }
+        return ans;
+
     }
 
     private PostReviewVO convertToPostReviewVO(SearchHit hit) {

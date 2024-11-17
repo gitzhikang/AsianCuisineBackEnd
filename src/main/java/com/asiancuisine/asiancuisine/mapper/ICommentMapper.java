@@ -1,5 +1,6 @@
 package com.asiancuisine.asiancuisine.mapper;
 
+import com.asiancuisine.asiancuisine.dto.SendCommentDTO;
 import com.asiancuisine.asiancuisine.entity.Comment;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -14,4 +15,7 @@ public interface ICommentMapper {
     // query child comments
     List<Comment> getChildComments(@Param("parentId") Long parentId);
 
+    void saveParentComment(SendCommentDTO sendCommentDTO);
+
+    void saveChildComment(SendCommentDTO sendCommentDTO);
 }

@@ -19,4 +19,8 @@ public class RedisConstants {
     public static final String USER_POST_LIKED = "user_post_liked:";
 
     public static final String ALL_TAGS = "tags";
+
+    public static final String USER_COMMENT_LIKED = "user_comment_liked:";
+    public static final String POST_COMMENTS_LIKES = "post_comments_likes:";
+    public static final String POST_COMMENTS_COUNT = "post_comments_count:";
 }

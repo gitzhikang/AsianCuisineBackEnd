@@ -1,6 +1,5 @@
 package com.asiancuisine.asiancuisine.vo;
 
-
 import com.asiancuisine.asiancuisine.entity.Comment;
 import lombok.Builder;
 import lombok.Data;
@@ -13,18 +12,15 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 @Builder
-public class ArticleVO {
+public class CommentVO {
     private Long id;
-    private String title;
-    private String desc;
-    private String[] tag;
-    private String dateTime;
-    private String location;
-    private Long userId;
-    private String userName;
+    private Long postId;
     private String avatarUrl;
-    private String[] images;
+    private String userName;
+    private String message;
     private int favoriteCount;
     private boolean isFavorite;
-    private List<CommentVO> comments;
+    private String dateTime;
+    private String location;
+    private List<CommentVO> children;
 }

@@ -20,7 +20,6 @@
 
     <!-- Insert statement to save post -->
     <insert id="savaPost" useGeneratedKeys="true" keyProperty="id">
-        <!-- Assuming you have a table named `posts` -->
         INSERT INTO post (user_id, title, text,first_image_url
         <if test="tags != null and tags != ''">
             , tags

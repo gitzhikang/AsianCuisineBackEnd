@@ -2,6 +2,7 @@ package com.asiancuisine.asiancuisine.controller;
 
 import com.asiancuisine.asiancuisine.Result.Result;
 import com.asiancuisine.asiancuisine.context.BaseContext;
+import com.asiancuisine.asiancuisine.dto.SendCommentDTO;
 import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
 import com.asiancuisine.asiancuisine.vo.ArticleVO;
@@ -59,8 +60,7 @@ public class CommunityController {
     @ApiOperation("Get Post Review List")
     @GetMapping("/getPostPreview")
     public Result<PostReviewReturnVO> getPostPreview(@RequestParam("scrollId") String scrollId, @RequestParam("cacheTime") Long cacheTime) throws IOException {
-//        Long currentUserId = BaseContext.getCurrentId();
-        Long currentUserId = 15L;
+        Long currentUserId = BaseContext.getCurrentId();
         PostReviewReturnVO postReviewReturnVO= communityService.getRecommendPostPreviewByUserId(currentUserId, scrollId, cacheTime);
         return Result.success(postReviewReturnVO);
     }
@@ -70,6 +70,18 @@ public class CommunityController {
     public Result<ArticleVO> getPostDetail(@PathVariable Long postId) throws IOException {
         return success(communityService.getPostDetail(postId));
     }
+
+    @ApiOperation("Send Comment")
+    @PostMapping("/sendCommentPost")
+    public Result sendCommentPost(@RequestBody SendCommentDTO sendCommentDTO) {
+        Long currentUserId = BaseContext.getCurrentId();
+        sendCommentDTO.setUserId(currentUserId);
+        communityService.sendCommentPost(sendCommentDTO);
+        return Result.success();
+    }
+
+
+
 
 
 

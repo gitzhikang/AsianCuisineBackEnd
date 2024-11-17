@@ -24,6 +24,19 @@
         SELECT * FROM post_comment WHERE parent_id = #{parentId} ORDER BY create_time
     </select>
 
+    <!-- insert a comment -->
+    <insert id="saveParentComment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post_comment (post_id, user_id, content)
+        VALUES (#{postId}, #{userId}, #{message})
+    </insert>
+
+    <!-- insert a comment -->
+    <insert id="saveChildComment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO post_comment (post_id, user_id, content,parent_id)
+        VALUES (#{postId}, #{userId}, #{message},#{parentCommentId})
+    </insert>
+
+
 
 
 </mapper>

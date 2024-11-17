@@ -34,7 +34,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     protected void addInterceptors(InterceptorRegistry registry) {
         log.info("Begin registering interceptors...");
         registry.addInterceptor(jwtTokenUserInterceptor)
-                .addPathPatterns("/auth/validate","/community/upload", "collection/addCollection")
+                .addPathPatterns("/auth/validate","/community/**", "collection/addCollection")
                 .excludePathPatterns("/user/login");
         registry.addInterceptor(jwtTokenResetPasswordInterceptor)
                 .addPathPatterns("/user/resetPassword")

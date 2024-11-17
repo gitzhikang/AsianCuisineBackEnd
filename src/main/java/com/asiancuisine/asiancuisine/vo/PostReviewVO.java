@@ -1,5 +1,6 @@
 package com.asiancuisine.asiancuisine.vo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -13,7 +14,10 @@ public class PostReviewVO {
     private String avatarUrl;
     private String title;
     private String image;
-    private int favoriteCount;
+
+    @JsonProperty("isFavorite")
     private boolean isFavorite;
+
+    private int favoriteCount;
 }
 

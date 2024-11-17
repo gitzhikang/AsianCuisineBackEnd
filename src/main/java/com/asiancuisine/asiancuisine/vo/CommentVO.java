@@ -1,6 +1,7 @@
 package com.asiancuisine.asiancuisine.vo;
 
 import com.asiancuisine.asiancuisine.entity.Comment;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -19,6 +20,7 @@ public class CommentVO {
     private String userName;
     private String message;
     private int favoriteCount;
+    @JsonProperty("isFavorite")
     private boolean isFavorite;
     private String dateTime;
     private String location;

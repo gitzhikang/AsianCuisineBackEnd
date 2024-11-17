@@ -80,6 +80,40 @@ public class CommunityController {
         return Result.success();
     }
 
+    @ApiOperation("Like Post")
+    @GetMapping("/likePost/{postId}")
+    public Result likePost(@PathVariable Long postId) {
+        Long currentUserId = BaseContext.getCurrentId();
+        communityService.likePost(postId, currentUserId);
+        return Result.success();
+    }
+
+    @ApiOperation("Unlike Post")
+    @GetMapping("/unLikePost/{postId}")
+    public Result UnLikePost(@PathVariable Long postId) {
+        Long currentUserId = BaseContext.getCurrentId();
+        communityService.unLikePost(postId, currentUserId);
+        return Result.success();
+    }
+
+    @ApiOperation("Like Comment")
+    @GetMapping("/likeComment/{commentId}")
+    public Result likeComment(@PathVariable Long commentId) {
+        Long currentUserId = BaseContext.getCurrentId();
+        communityService.likeComment(commentId, currentUserId);
+        return Result.success();
+    }
+
+    @ApiOperation("UnLike Comment")
+    @GetMapping("/unLikeComment/{commentId}")
+    public Result unLikeComment(@PathVariable Long commentId) {
+        Long currentUserId = BaseContext.getCurrentId();
+        communityService.unLikeComment(commentId, currentUserId);
+        return Result.success();
+    }
+
+
+
 
 
 

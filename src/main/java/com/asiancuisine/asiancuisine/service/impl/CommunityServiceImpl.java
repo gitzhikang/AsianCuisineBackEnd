@@ -267,6 +267,32 @@ public class CommunityServiceImpl implements ICommunityService {
         }
     }
 
+    @Override
+    public void likePost(Long postId, Long currentUserId) {
+        stringRedisTemplate.opsForValue().increment(RedisConstants.POST_LIKES+postId);
+        stringRedisTemplate.opsForSet().add(RedisConstants.USER_POST_LIKED+currentUserId, postId.toString());
+    }
+
+    @Override
+    public void likeComment(Long commentId, Long currentUserId) {
+        //increment comment likes in redis
+        stringRedisTemplate.opsForValue().increment(RedisConstants.POST_COMMENTS_LIKES+commentId);
+        //add comment id to user's liked comment set
+        stringRedisTemplate.opsForSet().add(RedisConstants.USER_COMMENT_LIKED+currentUserId, commentId.toString());
+    }
+
+    @Override
+    public void unLikePost(Long postId, Long currentUserId) {
+        stringRedisTemplate.opsForValue().decrement(RedisConstants.POST_LIKES+postId);
+        stringRedisTemplate.opsForSet().remove(RedisConstants.USER_POST_LIKED+currentUserId, postId.toString());
+    }
+
+    @Override
+    public void unLikeComment(Long commentId, Long currentUserId) {
+        stringRedisTemplate.opsForValue().decrement(RedisConstants.POST_COMMENTS_LIKES+commentId);
+        stringRedisTemplate.opsForSet().remove(RedisConstants.USER_COMMENT_LIKED+currentUserId, commentId.toString());
+    }
+
     private List<CommentVO> convertToCommentVO(List<Comment> comments) {
         List<CommentVO> ans = new ArrayList<>();
         for (Comment comment : comments) {
@@ -274,6 +300,7 @@ public class CommunityServiceImpl implements ICommunityService {
             String avatarUrl = userInfoPreview[0];
             String userName = userInfoPreview[1];
             boolean isFavorite = stringRedisTemplate.opsForSet().isMember(RedisConstants.USER_COMMENT_LIKED + BaseContext.getCurrentId(), comment.getId().toString());
+            int favoriteCount = Integer.valueOf(stringRedisTemplate.opsForValue().get(RedisConstants.POST_COMMENTS_LIKES+comment.getId())==null?"0":stringRedisTemplate.opsForValue().get(RedisConstants.POST_COMMENTS_LIKES+comment.getId()));
             List<CommentVO> children = null;
             if(comment.getChildComments() !=null && comment.getChildComments().size() > 0){
                 children = convertToCommentVO(comment.getChildComments());
@@ -284,7 +311,7 @@ public class CommunityServiceImpl implements ICommunityService {
                     .avatarUrl(avatarUrl)
                     .userName(userName)
                     .message(comment.getContent())
-                    .favoriteCount(comment.getFavoriteCount())
+                    .favoriteCount(favoriteCount)
                     .isFavorite(isFavorite)
                     .dateTime(comment.getCreateTime())
                     .location(comment.getLocation())

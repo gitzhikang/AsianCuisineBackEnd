@@ -20,4 +20,12 @@ public interface ICommunityService {
     ArticleVO getPostDetail(Long postId);
 
     void sendCommentPost(SendCommentDTO sendCommentDTO);
+
+    void likePost(Long postId, Long currentUserId);
+
+    void likeComment(Long commentId, Long currentUserId);
+
+    void unLikePost(Long postId, Long currentUserId);
+
+    void unLikeComment(Long commentId, Long currentUserId);
 }

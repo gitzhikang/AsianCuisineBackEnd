@@ -2,6 +2,7 @@ package com.asiancuisine.asiancuisine.vo;
 
 
 import com.asiancuisine.asiancuisine.entity.Comment;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,6 +26,7 @@ public class ArticleVO {
     private String avatarUrl;
     private String[] images;
     private int favoriteCount;
+    @JsonProperty("isFavorite")
     private boolean isFavorite;
     private List<CommentVO> comments;
 }

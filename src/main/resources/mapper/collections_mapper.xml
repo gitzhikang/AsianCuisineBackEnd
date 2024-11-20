@@ -14,7 +14,7 @@
         WHERE user_id = #{userId}
     </select>
 
-    <insert id="addCollection" useGeneratedKeys="true" keyProperty="collectionId">
+    <insert id="addCollection" useGeneratedKeys="true" keyProperty="collection_id">
         INSERT INTO collections (collection_name, collection_img, user_id)
         VALUES (#{collectionName}, #{collectionImg}, #{userId})
     </insert>

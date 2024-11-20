@@ -30,8 +30,8 @@ public class CollectionController {
     private UserService userService;
 
     @ApiOperation("Get Collection Info for One User")
-    @GetMapping("/getCollectionInfo/{emailAddress}")
-    public ResponseEntity<Result<?>> getCollectionInfo(@PathParam("emailAddress") String emailAddress) {
+    @GetMapping("/getCollectionInfo")
+    public ResponseEntity<Result<?>> getCollectionInfo(@RequestParam("emailAddress") String emailAddress) {
         try {
             // acquire user info
             User currentUser = userService.queryByEmailAddress(emailAddress);

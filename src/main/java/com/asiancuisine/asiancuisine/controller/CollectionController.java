@@ -44,6 +44,7 @@ public class CollectionController {
 
             return new ResponseEntity<>(Result.success(collections), HttpStatus.OK);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(Result.error("get collection info failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }
@@ -63,6 +64,7 @@ public class CollectionController {
 
             return new ResponseEntity<>(Result.success(recipes), HttpStatus.OK);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(Result.error("get recipe info for one collection failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }
@@ -88,6 +90,7 @@ public class CollectionController {
                 return new ResponseEntity<>(Result.error("add recipe to collection failed"), HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(Result.error("add recipe to collection failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }
@@ -114,6 +117,7 @@ public class CollectionController {
                 return new ResponseEntity<>(Result.error("add collection failed"), HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(Result.error("add collection failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }
@@ -137,6 +141,7 @@ public class CollectionController {
                 return new ResponseEntity<>(Result.error("recipe does not exist in any collection"), HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(Result.error("check recipe in collection failed, please retry!"), HttpStatus.BAD_REQUEST);
         }
     }

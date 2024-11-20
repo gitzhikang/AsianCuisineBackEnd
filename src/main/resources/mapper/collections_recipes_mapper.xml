@@ -4,6 +4,8 @@
     <resultMap id="dataMap" type="com.asiancuisine.asiancuisine.entity.UserCollection">
         <id column="user_id" property="userId"/>
         <id column="collection_id" property="collectionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="collection_id" property="collection_id"/>
         <result column="recipe_url" property="recipeUrl"/>
         <result column="recipe_image" property="recipeImage"/>
         <result column="recipe_label" property="recipeLabel"/>

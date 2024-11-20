@@ -3,6 +3,7 @@
 <mapper namespace="com.asiancuisine.asiancuisine.mapper.ICollectionsMapper">
     <resultMap id="dataMap" type="com.asiancuisine.asiancuisine.entity.MyCollection">
         <id column="collection_id" property="collectionId"/>
+        <result column="collection_id" property="collectionId"/>
         <result column="collection_name" property="collectionName"/>
         <result column="collection_img" property="collectionImg"/>
         <result column="user_id" property="userId"/>

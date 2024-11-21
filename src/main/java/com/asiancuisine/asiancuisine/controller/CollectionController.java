@@ -9,15 +9,12 @@ import com.asiancuisine.asiancuisine.service.impl.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Options;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.websocket.server.PathParam;
 import java.util.List;
 
 @Api(tags = "Collection Api")
@@ -33,7 +30,7 @@ public class CollectionController {
 
     @ApiOperation("Get Collection Info for One User")
     @GetMapping("/getCollectionInfo")
-    public ResponseEntity<Result<?>> getCollectionInfo(@RequestParam("emailAddress") String emailAddress) {
+    public ResponseEntity<Result<?>> getCollectionRecipes(@RequestParam("emailAddress") String emailAddress) {
         try {
             // acquire user info
             User currentUser = userService.queryByEmailAddress(emailAddress);
@@ -53,7 +50,7 @@ public class CollectionController {
 
     @ApiOperation("Get Recipes for User's One Collection")
     @GetMapping("/getCollectionRecipes")
-    public ResponseEntity<Result<?>> getCollectionInfo(@RequestParam("emailAddress") String emailAddress, @RequestParam("collectionId") Long collectionId) {
+    public ResponseEntity<Result<?>> getCollectionRecipes(@RequestParam("emailAddress") String emailAddress, @RequestParam("collectionId") Long collectionId) {
         try {
             // acquire user info
             User currentUser = userService.queryByEmailAddress(emailAddress);

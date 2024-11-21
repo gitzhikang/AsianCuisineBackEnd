@@ -26,7 +26,7 @@
 
     <insert id="addRecipeToCollection" useGeneratedKeys="false">
         INSERT INTO collections_recipes (user_id, collection_id, recipe_url, recipe_image, recipe_label, recipe_time)
-        VALUES (#{userId}, #{collectionId}, #{recipe_url}, #{recipe_image}, #{recipe_label}, #{recipe_time})
+        VALUES (#{userId}, #{collectionId}, #{recipeUrl}, #{recipeImage}, #{recipeLabel}, #{recipeTime})
     </insert>
 
 </mapper>

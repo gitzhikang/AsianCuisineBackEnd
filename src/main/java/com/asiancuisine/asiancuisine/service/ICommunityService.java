@@ -28,4 +28,8 @@ public interface ICommunityService {
     void unLikePost(Long postId, Long currentUserId);
 
     void unLikeComment(Long commentId, Long currentUserId);
+
+    List<String> uploadImage(MultipartFile[] files) throws IOException;
+
+    void uploadPostWithUrls(String[] imageUrls, String text, String title, String tags) throws IOException;
 }

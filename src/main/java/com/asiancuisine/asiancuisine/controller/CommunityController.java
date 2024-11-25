@@ -1,8 +1,10 @@
 package com.asiancuisine.asiancuisine.controller;
 
+import com.amazonaws.services.s3.transfer.Upload;
 import com.asiancuisine.asiancuisine.Result.Result;
 import com.asiancuisine.asiancuisine.context.BaseContext;
 import com.asiancuisine.asiancuisine.dto.SendCommentDTO;
+import com.asiancuisine.asiancuisine.dto.UploadWithUrlDTO;
 import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
 import com.asiancuisine.asiancuisine.vo.ArticleVO;
@@ -47,6 +49,34 @@ public class CommunityController {
         }
         return Result.error("File Upload Failed");
     }
+
+    @ApiOperation("Upload image to Aws s3, get the image urls")
+    @PostMapping("/uploadImage")
+    public Result uploadImage(@RequestParam("files") MultipartFile[] files){
+        List<String> uploadedUrls = new ArrayList<>();
+        try {
+            uploadedUrls = communityService.uploadImage(files);
+            return Result.success(uploadedUrls);
+        } catch (IOException e) {
+            log.error("File Upload Failed:{}",e);
+        }
+        return Result.error("File Upload Failed");
+    }
+
+    @ApiOperation("Upload post with uploaded image urls")
+    @PostMapping("/uploadWithUrls")
+    public Result uploadWithUrls(@RequestBody UploadWithUrlDTO uploadWithUrlDTO){
+        List<String> uploadedUrls = new ArrayList<>();
+        try {
+            communityService.uploadPostWithUrls(uploadWithUrlDTO.getImageUrls(),uploadWithUrlDTO.getText(),uploadWithUrlDTO.getTitle(),uploadWithUrlDTO.getTags());
+            return Result.success();
+        } catch (IOException e) {
+            log.error("File Upload Failed:{}",e);
+        }
+        return Result.error("File Upload Failed");
+    }
+
+
 
     @ApiOperation("Tags Hint in tags selection page")
     @GetMapping("/suggestion/{text}")

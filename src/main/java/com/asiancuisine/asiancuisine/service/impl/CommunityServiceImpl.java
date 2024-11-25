@@ -293,6 +293,91 @@ public class CommunityServiceImpl implements ICommunityService {
         stringRedisTemplate.opsForSet().remove(RedisConstants.USER_COMMENT_LIKED+currentUserId, commentId.toString());
     }
 
+    @Override
+    public List<String> uploadImage(MultipartFile[] files) throws IOException {
+        List<String> uploadedUrls = new ArrayList<>();
+        for(MultipartFile file:files){
+            uploadedUrls.add(awsS3Util.uploadFile(file,bucketName));
+        }
+        return uploadedUrls;
+    }
+
+    @Override
+    public void uploadPostWithUrls(String[] imageUrls, String text, String title, String tags) throws IOException {
+        List<String> uploadedUrls = new ArrayList<>();
+        for(String imageUrl:imageUrls){
+            uploadedUrls.add(imageUrl);
+        }
+        String[] tagsArray = tags.split(",");
+
+        //get new tags
+        List<Boolean> tagsIsExist = redisUtil.findTagsIsExist(Arrays.asList(tagsArray));
+        List<String> newTags = new ArrayList<>();
+        for(int i = 0; i < tagsIsExist.size(); i++) {
+            if (!tagsIsExist.get(i)) {
+                newTags.add(tagsArray[i]);
+            }
+        }
+
+        if(newTags!=null && newTags.size()>0){
+            //save new tags to redis
+            stringRedisTemplate.opsForSet().add(RedisConstants.ALL_TAGS, newTags.toArray(new String[0]));
+
+            //save new tags to database
+            postMapper.saveTags(newTags.toArray(new String[0]));
+            //save new tags to elasticsearch
+            for (String tag : newTags.toArray(new String[0])) {
+                try {
+                    highLevelClient.index(new IndexRequest("tags").id(tag).source("tag", tag), RequestOptions.DEFAULT);
+                }catch (IOException e){
+                    log.info("Error while saving tags to elasticsearch:{}",e);
+                }
+            }
+        }
+
+
+        Long userId = BaseContext.getCurrentId();
+        String firstImageUrl = uploadedUrls.get(0);
+        //save userId, text, title, image to database
+        Post post = new Post();
+        post.setUserId(userId);
+        post.setText(text);
+        post.setTitle(title);
+        post.setTags(tags);
+        post.setFirstImageUrl(firstImageUrl);
+        postMapper.savaPost(post);
+        Long postId = post.getId();
+        postMapper.savaImage(postId,uploadedUrls);
+
+//        Get user details from Redis
+        String[] userInfoPreview = redisUtil.getUserInfoPreview(userId);
+        String userIcon = userInfoPreview[0];
+        String userNickName = userInfoPreview[1];
+
+        //save tags to redis
+        if(tags != null && !tags.equals("")){
+            List<String> tagsList = new ArrayList<>(Arrays.asList(tags.split(",")));
+            redisUtil.saveTagsByUserId(userId, tagsList);
+            redisUtil.saveTagsToHotTags(tagsList);
+        }
+
+        //save likes to redis
+        stringRedisTemplate.opsForValue().set(RedisConstants.POST_LIKES+postId, "0");
+
+
+        //add post preview info to ES
+        Map<String, Object> postPreview = new HashMap<>();
+        postPreview.put("id", postId);
+        postPreview.put("user_id", userId);
+        postPreview.put("title", title);
+        postPreview.put("tags", tags);
+        postPreview.put("text", text);
+        postPreview.put("userIconUrl", userIcon);
+        postPreview.put("firstImageUrl", firstImageUrl);
+
+        highLevelClient.index(new IndexRequest("post_preview").id(postId.toString()).source(postPreview), RequestOptions.DEFAULT);
+    }
+
     private List<CommentVO> convertToCommentVO(List<Comment> comments) {
         List<CommentVO> ans = new ArrayList<>();
         for (Comment comment : comments) {

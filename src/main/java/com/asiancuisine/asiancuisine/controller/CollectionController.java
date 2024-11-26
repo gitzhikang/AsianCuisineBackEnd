@@ -94,6 +94,32 @@ public class CollectionController {
         }
     }
 
+    @ApiOperation("Delete a recipe in a collection")
+    @PostMapping("/unbindRecipeToCollection")
+    public ResponseEntity<Result<?>> unbindRecipeToCollection(@RequestParam("emailAddress") String emailAddress,
+                                                              @RequestParam("collectionId") Long collectionId,
+                                                              @RequestParam("recipeUrl") String recipeUrl,
+                                                              @RequestParam("recipeImage") String recipeImage,
+                                                              @RequestParam("recipeLabel") String recipeLabel,
+                                                              @RequestParam("recipeTime") Long recipeTime) {
+        try {
+            User currentUser = userService.queryByEmailAddress(emailAddress);
+            if (currentUser == null) {
+                return new ResponseEntity<>(Result.error("email address does not exist in our database"), HttpStatus.BAD_REQUEST);
+            }
+
+            int result = collectionService.deleteRecipeFromCollection(currentUser.getId(), collectionId, recipeUrl, recipeImage, recipeLabel, recipeTime);
+            if (result > 0) {
+                return new ResponseEntity<>(Result.success(), HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(Result.error("delete recipe from collection failed"), HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(Result.error("unbind recipe to a collection"), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @ApiOperation("Add a Collection")
     @PostMapping("/addCollection")
     public ResponseEntity<Result<?>> addCollection(@RequestParam("emailAddress") String emailAddress, @RequestParam("collectionName") String collectionName, @RequestParam("collectionImage") MultipartFile collectionImage) {
@@ -122,7 +148,7 @@ public class CollectionController {
     }
 
     @ApiOperation("Check Whether A Recipe Is In Collections")
-    @GetMapping("checkInCollection")
+    @GetMapping("/checkInCollection")
     public ResponseEntity<Result<?>> checkInCollection(@RequestParam("emailAddress") String emailAddress,
                                                        @RequestParam("recipeUrl") String recipeUrl,
                                                        @RequestParam("recipeImage") String recipeImage,

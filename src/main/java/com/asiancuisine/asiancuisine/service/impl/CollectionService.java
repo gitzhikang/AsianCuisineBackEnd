@@ -30,6 +30,10 @@ public class CollectionService implements ICollectionService {
         return collectionsRecipesMapper.addRecipeToCollection(userId, collectionId, recipeUrl, recipeImage, recipeLabel, recipeTime);
     }
 
+    public int deleteRecipeFromCollection(Long userId, Long collectionId, String recipeUrl, String recipeImage, String recipeLabel, Long recipeTime) {
+        return collectionsRecipesMapper.deleteRecipeFromCollection(userId, collectionId, recipeUrl, recipeImage, recipeLabel, recipeTime);
+    }
+
     @Override
     public boolean isRecipeInCollection(Long userId, String recipeUrl, String recipeImage, String recipeLabel, Long recipeTime) {
         int result = collectionsRecipesMapper.checkRecipesInCollection(userId, recipeUrl, recipeImage, recipeLabel, recipeTime);

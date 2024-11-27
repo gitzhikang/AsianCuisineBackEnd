@@ -82,7 +82,7 @@ public class CommunityServiceImpl implements ICommunityService {
         List<Boolean> tagsIsExist = redisUtil.findTagsIsExist(Arrays.asList(tagsArray));
         List<String> newTags = new ArrayList<>();
         for(int i = 0; i < tagsIsExist.size(); i++) {
-            if (!tagsIsExist.get(i)) {
+            if (!tagsIsExist.get(i)&&!tagsArray[i].equals("")) {
                 newTags.add(tagsArray[i]);
             }
         }
@@ -314,11 +314,11 @@ public class CommunityServiceImpl implements ICommunityService {
         List<Boolean> tagsIsExist = redisUtil.findTagsIsExist(Arrays.asList(tagsArray));
         List<String> newTags = new ArrayList<>();
         for(int i = 0; i < tagsIsExist.size(); i++) {
-            if (!tagsIsExist.get(i)) {
+            if (!tagsIsExist.get(i)&&!tagsArray[i].equals("")) {
                 newTags.add(tagsArray[i]);
             }
         }
-
+        log.info("New tags:{}",newTags);
         if(newTags!=null && newTags.size()>0){
             //save new tags to redis
             stringRedisTemplate.opsForSet().add(RedisConstants.ALL_TAGS, newTags.toArray(new String[0]));

@@ -29,4 +29,14 @@
         VALUES (#{userId}, #{collectionId}, #{recipeUrl}, #{recipeImage}, #{recipeLabel}, #{recipeTime})
     </insert>
 
+    <delete id="deleteRecipeFromCollection">
+        DELETE FROM collections_recipes
+        WHERE user_id = #{userId}
+          AND collection_id = #{collectionId}
+          AND recipe_url = #{recipeUrl}
+          AND recipe_image = #{recipeImage}
+          AND recipe_label = #{recipeLabel}
+          AND recipe_time = #{recipeTime}
+    </delete>
+
 </mapper>

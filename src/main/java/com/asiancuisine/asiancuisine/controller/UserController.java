@@ -2,6 +2,7 @@ package com.asiancuisine.asiancuisine.controller;
 
 import com.asiancuisine.asiancuisine.Result.Result;
 import com.asiancuisine.asiancuisine.constant.JwtClaimsKeyConstant;
+import com.asiancuisine.asiancuisine.constant.RedisConstants;
 import com.asiancuisine.asiancuisine.entity.User;
 import com.asiancuisine.asiancuisine.service.IUserService;
 import com.asiancuisine.asiancuisine.util.GmailUtil;
@@ -133,6 +134,9 @@ public class UserController {
                 return new ResponseEntity<>(Result.error("email address does not exist in our database"), HttpStatus.BAD_REQUEST);
             }
             userService.updateUserProfile(currentUser.getId(), iconUri, nickName, motto);
+
+            // delete cache in redis
+            redisUtil.deleteUserInfoPreview(currentUser.getId());
 
             // get the updated user
             User updatedUser = userService.queryByEmailAddress(emailAddress);

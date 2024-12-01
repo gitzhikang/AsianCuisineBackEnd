@@ -82,7 +82,10 @@ public class RedisUtil {
         return new String[]{userIcon, userNickName};
     }
 
-
+    // delete user preview
+    public void deleteUserInfoPreview(Long userId) {
+        stringRedisTemplate.delete(RedisConstants.USER_PREVIEW_KEY + userId);
+    }
 
     // Save verification code to Redis with expiration time
     public void saveVerificationCode(Long userId, String code) {

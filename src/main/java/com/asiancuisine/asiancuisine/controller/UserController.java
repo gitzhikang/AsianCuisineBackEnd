@@ -4,6 +4,7 @@ import com.asiancuisine.asiancuisine.Result.Result;
 import com.asiancuisine.asiancuisine.constant.JwtClaimsKeyConstant;
 import com.asiancuisine.asiancuisine.constant.RedisConstants;
 import com.asiancuisine.asiancuisine.entity.User;
+import com.asiancuisine.asiancuisine.enums.Sex;
 import com.asiancuisine.asiancuisine.service.IUserService;
 import com.asiancuisine.asiancuisine.util.GmailUtil;
 import com.asiancuisine.asiancuisine.util.JwtUtil;
@@ -73,6 +74,12 @@ public class UserController {
             PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             String hashedPassword = passwordEncoder.encode(user.getPassword());
             user.setPassword(hashedPassword);
+
+            if (user.getSex() == Sex.FEMALE) {
+                user.setIcon("https://files.catbox.moe/7d1nm6.png");
+            } else {
+                user.setIcon("https://files.catbox.moe/xz8nj2.png");
+            }
 
             int result = userService.addUser(user);
             Long id = userService.queryIdByEmailAddress(user.getEmailAddress());

@@ -15,7 +15,7 @@ public interface ICommunityService {
 
     List<String> getSuggestion(String text) throws IOException;
 
-    PostReviewReturnVO getRecommendPostPreviewByUserId(Long currentUserId, String scrollId, Long cacheTime) throws IOException;
+    PostReviewReturnVO getRecommendPostPreviewByUserId(Long currentUserId, int page,boolean reFresh) throws IOException;
 
     ArticleVO getPostDetail(Long postId);
 

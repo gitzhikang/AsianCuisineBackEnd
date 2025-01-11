@@ -26,5 +26,7 @@ public class RedisConstants {
 
     public static final String POST_COMMENTS_COUNT = "post_comments_count:";
 
+    public static final String BLOOM_FILTER = "bloom:filter:";
+
 
 }

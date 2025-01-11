@@ -29,12 +29,17 @@ public class RedisUtil {
 
     //get tags from user record
     public Set<String> getTagsByUserId(Long userId) {
-        return stringRedisTemplate.opsForSet().randomMembers(RedisConstants.USER_TAGS_KEY+userId.toString(), RedisConstants.TAGS_COUNT_ONE_USER).stream().collect(Collectors.toSet());
+        return stringRedisTemplate.opsForSet().members(RedisConstants.USER_TAGS_KEY+userId.toString());
     }
 
     //get top 3 hot tags in community
     public Set<String> getTop3HotTags(){
        return   stringRedisTemplate.opsForZSet().range(RedisConstants.HOT_TAGS_KEY,0L,3L);
+    }
+
+    //get specific tag weight in community
+    public Double getTagWeight(String tag){
+        return stringRedisTemplate.opsForZSet().score(RedisConstants.HOT_TAGS_KEY,tag);
     }
 
     //save tags to hot tags in community

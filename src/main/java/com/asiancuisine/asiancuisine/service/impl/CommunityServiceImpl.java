@@ -1,5 +1,6 @@
 package com.asiancuisine.asiancuisine.service.impl;
 
+import com.asiancuisine.asiancuisine.config.SearchConfig;
 import com.asiancuisine.asiancuisine.constant.PostConstants;
 import com.asiancuisine.asiancuisine.constant.RedisConstants;
 import com.asiancuisine.asiancuisine.context.BaseContext;
@@ -17,6 +18,7 @@ import com.asiancuisine.asiancuisine.vo.ArticleVO;
 import com.asiancuisine.asiancuisine.vo.CommentVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewReturnVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewVO;
+import com.google.common.hash.BloomFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -24,10 +26,19 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.search.SearchScrollRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.lucene.search.function.CombineFunction;
+import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
 import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.Scroll;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.search.suggest.Suggest;
 import org.elasticsearch.search.suggest.SuggestBuilder;
 import org.elasticsearch.search.suggest.SuggestBuilders;
@@ -40,7 +51,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -69,6 +82,16 @@ public class CommunityServiceImpl implements ICommunityService {
 
     @Autowired
     private ICommentMapper commentMapper;
+
+    @Autowired
+    private BloomFilterService bloomFilterService;
+
+    @Autowired
+    private SearchConfig searchConfig;
+
+    private final Map<Long, Integer> userCursors = new ConcurrentHashMap<>();
+
+    private final Map<Long, Long> userRandomSeeds = new ConcurrentHashMap<>();
 
     @Override
     public void uploadPost(MultipartFile[] files, String text, String title, String tags) throws IOException {
@@ -168,51 +191,173 @@ public class CommunityServiceImpl implements ICommunityService {
     }
 
     @Override
-    public PostReviewReturnVO getRecommendPostPreviewByUserId(Long currentUserId, String scrollId, Long cacheExpireTime) throws IOException {
-        final Scroll scroll = new Scroll(TimeValue.timeValueMillis(PostConstants.CACHE_SCROLL_ID_EXPIRE_TIME));  // 设置 scroll 的生存时间
-        SearchResponse searchResponse;
-        Long cacheNewExpireTime = 0L;
-        // the refresh page request, will not use scrollId
-        // if the cacheTime in the ES has been expired, then we need to search again
-        if(scrollId == null || scrollId.equals("") || cacheExpireTime == 0 || cacheExpireTime - System.currentTimeMillis() > PostConstants.CACHE_SCROLL_ID_EXPIRE_TIME){
-            //1.get user's tags in redis
-            Set<String> tagsByUserId = redisUtil.getTagsByUserId(currentUserId);
-
-            //2.get top hot tags
-            Set<String> top3HotTags = redisUtil.getTop3HotTags();
-
-            //Combine 2 set
-
-            tagsByUserId.addAll(top3HotTags);
-
-
-
-            //3.using tags(from user and 1 random hot tags) to search in elastic search(should generate different page result)
-            //search post_content in index "post_preview" with tags in tagsByUserId
-            SearchRequest searchRequest = new SearchRequest("post_preview");
-            searchRequest.scroll(scroll);
-            searchRequest.source().query(QueryBuilders.matchQuery("post_content", tagsByUserId.toString())).size(10);
-
-            searchResponse = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-            log.info("Fresh Page Search Response: {}", searchResponse);
-            scrollId = searchResponse.getScrollId();
-            cacheNewExpireTime = System.currentTimeMillis() + PostConstants.CACHE_SCROLL_ID_EXPIRE_TIME;
-
-        }else {
-            SearchScrollRequest scrollRequest = new SearchScrollRequest(scrollId);
-            scrollRequest.scroll(TimeValue.timeValueMinutes(1));
-            searchResponse = highLevelClient.scroll(scrollRequest, RequestOptions.DEFAULT);
-            scrollId = searchResponse.getScrollId();
-            cacheNewExpireTime = cacheExpireTime;
-            log.info("scroll down to get more post previews: {}", searchResponse);
+    public PostReviewReturnVO getRecommendPostPreviewByUserId(Long currentUserId, int pageSize,boolean refresh) throws IOException {
+        if (refresh) {
+            userCursors.put(currentUserId, 0);
+            userRandomSeeds.put(currentUserId, System.currentTimeMillis());
         }
 
-        //parse search response and handle results
-        List<PostReviewVO> postPreviews = new ArrayList<>();
-        searchResponse.getHits().forEach(hit -> postPreviews.add(convertToPostReviewVO(hit)));
-        log.info("Recommended post previews: {}", postPreviews);
-        return PostReviewReturnVO.builder().cacheExpireTime(cacheNewExpireTime).scrollId(scrollId).postReviewVO(postPreviews).build();
+        Long randomSeed = userRandomSeeds.computeIfAbsent(currentUserId, k -> System.currentTimeMillis());
+        int currentCursor = userCursors.getOrDefault(currentUserId, 0);
+        BloomFilter<String> userBloomFilter = bloomFilterService.getBloomFilter(currentUserId.toString());
 
+        //1.get user's all tags in redis
+        Set<String> tagsByUserId = redisUtil.getTagsByUserId(currentUserId);
+
+        //2.get top hot 3 tags
+        Set<String> top3HotTags = redisUtil.getTop3HotTags();
+
+        //Combine 2 set
+        tagsByUserId.addAll(top3HotTags);
+
+        //get weight of tags
+        Map<String, Float> tagWeights = new HashMap<>();
+        for (String tag : tagsByUserId) {
+            Double weight = redisUtil.getTagWeight(tag);
+            if (weight != null) {
+                tagWeights.put(tag, weight.floatValue());
+            }
+        }
+
+        //3.using tags(from user and 1 random hot tags) to search in elastic search(should generate different page result)
+        //search post_content in index "post_preview" with tags in tagsByUserId
+
+        // Build Elasticsearch query
+        SearchSourceBuilder sourceBuilder = buildSearchQuery(tagWeights, currentCursor,randomSeed);
+
+        try {
+            List<PostReviewVO> posts = new ArrayList<>();
+            int attemptCount = 0;
+            int batchSize = searchConfig.getInitialBatchSize();
+            Set<String> seenInThisQuery = new HashSet<>();
+
+            while (posts.size() < pageSize && attemptCount < searchConfig.getMaxAttempts()) {
+                sourceBuilder.from(currentCursor);
+                sourceBuilder.size(batchSize);
+
+                // Execute search with time window
+                SearchRequest searchRequest = new SearchRequest("post_preview").source(sourceBuilder);
+                SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+                SearchHit[] hits = response.getHits().getHits();
+
+                if (hits.length == 0) {
+                    // Try without time window if no results
+                    sourceBuilder.query(buildFunctionScoreQuery(tagWeights, currentCursor,randomSeed));
+                    searchRequest = new SearchRequest("post_preview").source(sourceBuilder);
+                    response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+                    hits = response.getHits().getHits();
+
+                    if (hits.length == 0) {
+                        break;
+                    }
+                }
+
+                // Filter and map posts
+                for (SearchHit hit : hits) {
+                    String postId = hit.getId();
+                    if (!userBloomFilter.mightContain(postId) && !seenInThisQuery.contains(postId)) {
+                        PostReviewVO post = convertToPostReviewVO(hit);
+                        posts.add(post);
+                        seenInThisQuery.add(postId);
+
+                        if (posts.size() >= pageSize) {
+                            break;  // Stop once we have enough posts
+                        }
+                    }
+                }
+
+                currentCursor += hits.length;
+                attemptCount++;
+                batchSize *= 2;
+            }
+
+            // Reset Bloom filter if no results
+            if (posts.isEmpty()) {
+                log.info("Resetting Bloom filter for user {} due to insufficient results", currentUserId);
+                userBloomFilter = bloomFilterService.createNewBloomFilter(currentUserId.toString());
+
+                sourceBuilder.from(0);
+                sourceBuilder.size(pageSize);
+                SearchRequest searchRequest = new SearchRequest("posts").source(sourceBuilder);
+                SearchResponse response = highLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+                SearchHit[] hits = response.getHits().getHits();
+                posts = Arrays.stream(hits)
+                        .map(this::convertToPostReviewVO)
+                        .collect(Collectors.toList());
+                currentCursor = hits.length;
+            }
+
+            userCursors.put(currentUserId, currentCursor);
+            bloomFilterService.saveBloomFilter(currentUserId.toString(), userBloomFilter);
+
+            return PostReviewReturnVO.builder().postReviewVO(posts).build();
+
+        } catch (IOException e) {
+            log.error("Error getting recommendations: ", e);
+            throw new RuntimeException("Error getting recommendations", e);
+        }
+    }
+
+    private SearchSourceBuilder buildSearchQuery(Map<String, Float> tagWeights, int currentCursor,Long randomSeed) {
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        QueryBuilder functionScoreQuery = buildFunctionScoreQuery(tagWeights, currentCursor,randomSeed);
+
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                .must(functionScoreQuery)
+                .must(QueryBuilders.rangeQuery("timestamp")
+                        .gte("now-" + searchConfig.getTimeWindowDays() + "d")
+                        .lte("now"));
+
+        sourceBuilder.query(boolQuery);
+        return sourceBuilder;
+    }
+
+    private QueryBuilder buildFunctionScoreQuery(Map<String, Float> tagWeights, int currentCursor,Long randomSeed) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        for (String tag : tagWeights.keySet()) {
+            boolQuery.should(QueryBuilders.termQuery("tag", tag));
+        }
+
+        List<FunctionScoreQueryBuilder.FilterFunctionBuilder> functions = new ArrayList<>();
+
+        // Tag weight functions
+        for (Map.Entry<String, Float> entry : tagWeights.entrySet()) {
+            functions.add(
+                    new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                            QueryBuilders.termQuery("tag", entry.getKey()),
+                            ScoreFunctionBuilders.weightFactorFunction(entry.getValue())
+                    )
+            );
+        }
+
+        // Time decay function
+        functions.add(
+                new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                        ScoreFunctionBuilders.exponentialDecayFunction(
+                                "timestamp",
+                                "now",
+                                searchConfig.getDecayScaleDays() + "d",
+                                searchConfig.getDecayOffsetDays() + "d",
+                                searchConfig.getDecayFactor()
+                        )
+                )
+        );
+
+        // Random score function
+        functions.add(
+                new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+                        ScoreFunctionBuilders.randomFunction()
+                                .seed(randomSeed)
+                                .setField("_seq_no")
+                                .setWeight(searchConfig.getRandomWeight())
+                )
+        );
+
+        return QueryBuilders.functionScoreQuery(boolQuery,
+                        functions.toArray(new FunctionScoreQueryBuilder.FilterFunctionBuilder[0]))
+                .scoreMode(FunctionScoreQuery.ScoreMode.SUM)
+                .boostMode(CombineFunction.MULTIPLY);
     }
 
     @Override

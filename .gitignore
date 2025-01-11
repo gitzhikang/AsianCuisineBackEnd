@@ -33,3 +33,7 @@ build/
 .vscode/
 
 **/src/main/**/application-dev.yaml
+
+**/src/main/**/application-prod.yaml
+
+**/src/main/**/gmail/token.json

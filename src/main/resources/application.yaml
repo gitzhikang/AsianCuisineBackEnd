@@ -29,6 +29,28 @@ spring:
         max-idle: 10
         min-idle: 1
         time-between-eviction-runs: 10s
+  redisson:
+    single-server-config:
+      address: redis://${ac.spring.redis.host}:${ac.spring.redis.port}
+      database: 0
+      password: ${ac.spring.redis.password}
+      idle-connection-timeout: 10s
+      connect-timeout: 10s
+      timeout: 3000
+      retry-interval: 1000
+      retry-attempts: 3
+  rabbitmq:
+    addresses: localhost
+    port: 5672
+    username: admin
+    password: admin
+    listener:
+      simple:
+        prefetch: 1 # 每次投递n个消息，消费完在投递n个
+    topic:
+      post_update: post_update
+      
+
 
 
 mybatis:
@@ -38,6 +60,9 @@ mybatis:
 logging:
   level:
     com.asiancuisine.asiancuisine: debug
+
+
+
 
 ssh:
   host: ${ac.ssh.host}

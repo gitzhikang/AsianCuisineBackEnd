@@ -4,6 +4,7 @@ import com.asiancuisine.asiancuisine.po.Post;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface IPostMapper {
@@ -17,4 +18,12 @@ public interface IPostMapper {
     Post queryPostById(Long postId);
 
     List<String> queryImagesByPostId(Long postId);
+
+    void batchUpdateLikeCount(Map<Long,Integer> postLikeCountMap);
+
+    /**
+     * Get the maximum post ID in the database
+     * @return the maximum post ID
+     */
+    long getMaxPostId();
 }

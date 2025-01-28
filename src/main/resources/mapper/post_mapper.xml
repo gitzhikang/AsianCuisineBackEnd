@@ -56,4 +56,21 @@
         SELECT uri FROM post_image WHERE post_id = #{postId}
     </select>
 
+    <update id="batchUpdateLikeCount" parameterType="java.util.Map">
+        UPDATE posts
+        SET liked_count = CASE id
+        <foreach collection="_parameter.entrySet()" item="entry">
+            WHEN #{entry.key} THEN #{entry.value}
+        </foreach>
+        END
+        WHERE id IN
+        <foreach collection="_parameter.keySet()" item="postId" open="(" separator="," close=")">
+            #{postId}
+        </foreach>
+    </update>
+
+    <select id="getMaxPostId" resultType="long">
+        SELECT COALESCE(MAX(id), 0) FROM post
+    </select>
+
 </mapper>

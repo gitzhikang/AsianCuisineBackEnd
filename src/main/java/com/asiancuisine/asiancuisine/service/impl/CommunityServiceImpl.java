@@ -10,6 +10,7 @@ import com.asiancuisine.asiancuisine.entity.User;
 import com.asiancuisine.asiancuisine.mapper.ICommentMapper;
 import com.asiancuisine.asiancuisine.mapper.IPostMapper;
 import com.asiancuisine.asiancuisine.mapper.IUserMapper;
+
 import com.asiancuisine.asiancuisine.po.Post;
 import com.asiancuisine.asiancuisine.service.ICommunityService;
 import com.asiancuisine.asiancuisine.util.AwsS3Util;
@@ -19,6 +20,8 @@ import com.asiancuisine.asiancuisine.vo.CommentVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewReturnVO;
 import com.asiancuisine.asiancuisine.vo.PostReviewVO;
 import com.google.common.hash.BloomFilter;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -47,13 +50,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.asiancuisine.asiancuisine.entity.PostLike;
+import java.time.LocalDateTime;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import javax.annotation.PostConstruct;
 
 @Slf4j
 @Service
@@ -84,14 +96,37 @@ public class CommunityServiceImpl implements ICommunityService {
     private ICommentMapper commentMapper;
 
     @Autowired
+    private PostLikeMapper postLikeMapper;
+
+    @Autowired
     private BloomFilterService bloomFilterService;
 
     @Autowired
     private SearchConfig searchConfig;
 
+    private ThreadPoolExecutor likeTaskExecutor;
+
     private final Map<Long, Integer> userCursors = new ConcurrentHashMap<>();
 
     private final Map<Long, Long> userRandomSeeds = new ConcurrentHashMap<>();
+
+    @PostConstruct
+    public void init() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("post-like-pool-%d")
+                .setUncaughtExceptionHandler((t, e) -> log.error("Uncaught exception in thread {}", t.getName(), e))
+                .build();
+                
+        this.likeTaskExecutor = new ThreadPoolExecutor(
+                4,                      // core pool size
+                8,                      // maximum pool size
+                60L,                    // keep alive time
+                TimeUnit.SECONDS,       // time unit
+                new LinkedBlockingQueue<>(100),  // work queue
+                threadFactory,          // thread factory
+                new ThreadPoolExecutor.CallerRunsPolicy()  // rejection policy
+        );
+    }
 
     @Override
     public void uploadPost(MultipartFile[] files, String text, String title, String tags) throws IOException {
@@ -413,9 +448,34 @@ public class CommunityServiceImpl implements ICommunityService {
     }
 
     @Override
+    @Transactional
     public void likePost(Long postId, Long currentUserId) {
-        stringRedisTemplate.opsForValue().increment(RedisConstants.POST_LIKES+postId);
-        stringRedisTemplate.opsForSet().add(RedisConstants.USER_POST_LIKED+currentUserId, postId.toString());
+        String likedSetKey = RedisConstants.POST_LIKED_USERS + postId;
+        String likedCountKey = RedisConstants.POST_LIKES + postId;
+        String userLikedPostsKey = RedisConstants.USER_POST_LIKED + currentUserId;
+
+        // 1. has user liked the post before
+        Boolean isMember = stringRedisTemplate.opsForSet().isMember(likedSetKey, currentUserId.toString());
+        if (Boolean.TRUE.equals(isMember)) {
+            return;  // Already liked
+        }
+
+        try {
+            // 2. Save to database first
+            PostLike postLike = new PostLike();
+            postLike.setPostId(postId);
+            postLike.setUserId(currentUserId);
+            postLike.setCreateTime(LocalDateTime.now());
+            postLikeMapper.save(postLike);
+
+            // 3. If database operation succeeds, update Redis
+            stringRedisTemplate.opsForSet().add(likedSetKey, currentUserId.toString());
+            stringRedisTemplate.opsForValue().increment(likedCountKey);
+            stringRedisTemplate.opsForSet().add(userLikedPostsKey, postId.toString());
+        } catch (Exception e) {
+            log.error("Failed to like post", e);
+            throw new RuntimeException("Failed to like post", e);
+        }
     }
 
     @Override
@@ -427,9 +487,30 @@ public class CommunityServiceImpl implements ICommunityService {
     }
 
     @Override
+    @Transactional
     public void unLikePost(Long postId, Long currentUserId) {
-        stringRedisTemplate.opsForValue().decrement(RedisConstants.POST_LIKES+postId);
-        stringRedisTemplate.opsForSet().remove(RedisConstants.USER_POST_LIKED+currentUserId, postId.toString());
+        String likedSetKey = RedisConstants.POST_LIKED_USERS + postId;
+        String likeCountKey = RedisConstants.POST_LIKES + postId;
+        String userLikedPostsKey = RedisConstants.USER_POST_LIKED + currentUserId;
+        
+        // 1. Check if already liked
+        Boolean isMember = stringRedisTemplate.opsForSet().isMember(likedSetKey, currentUserId.toString());
+        if (Boolean.FALSE.equals(isMember)) {
+            return;  // Not liked yet
+        }
+        
+        try {
+            // 2. Delete from database first
+            postLikeMapper.deleteByPostIdAndUserId(postId, currentUserId);
+            
+            // 3. If database operation succeeds, update Redis
+            stringRedisTemplate.opsForSet().remove(likedSetKey, currentUserId.toString());
+            stringRedisTemplate.opsForValue().decrement(likeCountKey);
+            stringRedisTemplate.opsForSet().remove(userLikedPostsKey, postId.toString());
+        } catch (Exception e) {
+            log.error("Failed to unlike post", e);
+            throw new RuntimeException("Failed to unlike post", e);
+        }
     }
 
     @Override

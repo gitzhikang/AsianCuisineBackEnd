@@ -12,6 +12,8 @@ public class RedisConstants {
 
     public static final String POST_LIKES = "post_likes:";
 
+    public static final String POST_LIKED_USERS = "post_liked_users:";
+
     public static final String VERIFICATION_KEY = "verification_code:";
 
     public static final int VERIFICATION_CODE_EXPIRED_TIME_SECONDS = 600;
@@ -27,6 +29,12 @@ public class RedisConstants {
     public static final String POST_COMMENTS_COUNT = "post_comments_count:";
 
     public static final String BLOOM_FILTER = "bloom:filter:";
+
+    public static final String POST_UPDATE_BITMAP = "post_update_bitmap:";
+
+    public static final String POST_UPDATE_CURRENT_CHUNK = "post_update_current_chunk:";
+
+    public static final String POST_UPDATE_LOCK = "post_update_lock:";
 
 
 }

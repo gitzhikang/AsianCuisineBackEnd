@@ -39,8 +39,7 @@ public class CommunityController {
 
     @ApiOperation("Upload file to Aws s3")
     @PostMapping("/upload")
-    public Result upload(@RequestParam("files") MultipartFile[] files,@RequestParam("text") String text,@RequestParam("title") String title,@RequestParam("tags") String tags){
-        List<String> uploadedUrls = new ArrayList<>();
+    public Result<String> upload(@RequestParam("files") MultipartFile[] files,@RequestParam("text") String text,@RequestParam("title") String title,@RequestParam("tags") String tags){
         try {
             communityService.uploadPost(files,text,title,tags);
             return Result.success();

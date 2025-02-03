@@ -55,7 +55,7 @@ public class UpdatePostLikeJob {
     private EventPublisher eventPublisher;
 
      // 配置参数
-    private static final int SEGMENT_SIZE = 500_000; // 每个段包含100万个帖子
+    private static final int SEGMENT_SIZE = 500_000; // 每个段包含50万个帖子
     private static final int MAX_EXECUTE_UPDATE_COUNT = 2000; // 执行次数
     private static final int MAX_THREADS = 4; // 最大线程数
     private static final long LOCK_WAIT_TIME = 0L; // 锁等待时间(ms)

@@ -13,3 +13,4 @@
 - Used Redis Bitmap to efficiently track posts requiring cache updates, enabling batch processing
 - Created a scheduled scanner to identify posts marked for updates in the Bitmap
 - Introduced asynchronous message queues for batch updates, reducing database load and improving task throughput
+- Reduced database update operation by 80.9% (from 2000 to 382) under Skewed Load Test for 1M post update (The control target for the test was to use MQ for batch updates in batches of 500)

@@ -1,4 +1,6 @@
 # Repository for AsianCuisine backend
+The repository is the backend of the AsianCuisine project, which is a platform for sharing and recommending Asian cuisine. The backend is implemented using Spring Boot and the frontend is implemented using React.
+You could find the frontend repository [here](https://github.com/gitzhikang/AsianCuisineFrontEnd.git)
 # Features
 ## Tag-based Recommendation System
 - Version 1.0
